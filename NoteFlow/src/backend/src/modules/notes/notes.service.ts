@@ -17,6 +17,87 @@ export type NoteResponse = {
   updatedAt: string;
 };
 
+type ListParams = {
+  page: number;
+  limit: number;
+  search?: string;
+  tag?: string;
+  sort: "recent" | "oldest";
+  visibility?: "public" | "private";
+};
+
+function buildSearchFilter(search?: string) {
+  if (!search?.trim()) return {};
+  const regex = new RegExp(search.trim(), "i");
+  return {
+    $or: [{ title: regex }, { content: regex }, { tags: regex }],
+  };
+}
+
+export async function getPublicNotes(params: ListParams) {
+  const skip = (params.page - 1) * params.limit;
+  const sort = params.sort === "oldest" ? { createdAt: 1 } : { createdAt: -1 };
+
+  const filter: Record<string, unknown> = {
+    visibility: "public",
+    ...buildSearchFilter(params.search),
+  };
+
+  if (params.tag) filter.tags = params.tag;
+
+  const [docs, total] = await Promise.all([
+    NoteModel.find(filter).sort(sort).skip(skip).limit(params.limit).lean(),
+    NoteModel.countDocuments(filter),
+  ]);
+
+  return {
+    notes: docs.map((d) => toResponse(d as any)),
+    total,
+    page: params.page,
+    limit: params.limit,
+  };
+}
+
+export async function getPublicNoteBySlug(slug: string): Promise<NoteResponse | null> {
+  const doc = await NoteModel.findOne({ slug, visibility: "public" }).lean();
+  return doc ? toResponse(doc as any) : null;
+}
+
+export async function getOwnNotes(ownerId: string, params: ListParams) {
+  const skip = (params.page - 1) * params.limit;
+  const sort = params.sort === "oldest" ? { createdAt: 1 } : { createdAt: -1 };
+
+  const filter: Record<string, unknown> = {
+    owner: new Types.ObjectId(ownerId),
+    ...buildSearchFilter(params.search),
+  };
+
+  if (params.tag) filter.tags = params.tag;
+  if (params.visibility) filter.visibility = params.visibility;
+
+  const [docs, total] = await Promise.all([
+    NoteModel.find(filter).sort(sort).skip(skip).limit(params.limit).lean(),
+    NoteModel.countDocuments(filter),
+  ]);
+
+  return {
+    notes: docs.map((d) => toResponse(d as any)),
+    total,
+    page: params.page,
+    limit: params.limit,
+  };
+}
+
+export async function getOwnNoteById(ownerId: string, noteId: string): Promise<NoteResponse | null> {
+  if (!Types.ObjectId.isValid(noteId)) return null;
+  const doc = await NoteModel.findOne({
+    _id: noteId,
+    owner: new Types.ObjectId(ownerId),
+  }).lean();
+
+  return doc ? toResponse(doc as any) : null;
+}
+
 function slugify(title: string): string {
   const base = title
     .normalize("NFKD")
