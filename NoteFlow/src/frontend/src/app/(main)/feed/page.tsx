@@ -63,12 +63,13 @@ export default function HomePage() {
 
 
           <nav className="space-y-2">
-            <SidebarItem label="All Feeds" active />
-            <SidebarItem label="All Notes" />
-            <SidebarItem label="Favorites" />
-            <SidebarItem label="Projects" />
-            <SidebarItem label="Profile" />
-            <SidebarItem label="Settings" />
+            <SidebarItem label="All Feeds" href="/feed" active />
+            <SidebarItem label="Create Note" href="/notes/new" />
+            <SidebarItem label="All Notes" href="/notes" />
+            <SidebarItem label="Favorites" href="/favorites" />
+            <SidebarItem label="Projects" href="/projects" />
+            <SidebarItem label="Profile" href="/profile" />
+            <SidebarItem label="Settings" href="/settings" />
           </nav>
 
           <div className="mt-auto rounded-2xl bg-white/70 p-4">
@@ -107,6 +108,12 @@ export default function HomePage() {
           <div className="hidden items-center justify-between px-8 pt-6 lg:flex">
             <h1 className="text-3xl font-bold text-slate-900">Feed</h1>
             <div className="flex items-center gap-3 text-slate-500">
+            <Link
+              href="/notes/new"
+              className="rounded-full bg-indigo-600 px-4 py-2 text-sm font-semibold text-white shadow-sm transition hover:bg-indigo-700"
+            >
+              Create Note
+            </Link>
               <button className="rounded-full bg-white/70 p-2 shadow-sm transition hover:bg-white">
                 <IconBell className="h-5 w-5" />
               </button>
@@ -222,10 +229,10 @@ export default function HomePage() {
   );
 }
 
-function SidebarItem({ label, active = false }: { label: string; active?: boolean }) {
+function SidebarItem({ label, href, active = false }: { label: string; href: string;active?: boolean }) {
   return (
     <Link
-      href="#"
+      href={href}
       className={[
         "block rounded-xl px-4 py-2.5 text-sm font-medium transition",
         active

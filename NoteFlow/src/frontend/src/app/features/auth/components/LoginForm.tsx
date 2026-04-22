@@ -3,7 +3,8 @@
 import Link from "next/link";
 import Image from "next/image";
 import { useForm } from "react-hook-form";
-import { loginApi } from "@/features/auth/services/login.api";
+import { useLoginStore } from "@/features/auth/stores/login.store";
+import { useRouter } from "next/navigation";
 
 type LoginFormValues = {
   email: string;
@@ -22,11 +23,27 @@ export default function LoginPage() {
     },
     mode: "onTouched",
   });
+  
+
+  const router = useRouter();
+  const loginAccount = useLoginStore((s) => s.loginAccount);
+  const serverError = useLoginStore((s) => s.error);
+  const backendFieldErrors = useLoginStore((s) => s.fieldErrors);
+  const clearLoginError = useLoginStore((s) => s.clearLoginError);
 
   const onSubmit = async (data: LoginFormValues) => {
-    await loginApi({ email: data.email, password: data.password });
+    clearLoginError();
+    const ok = await loginAccount({
+      email: data.email,
+      password: data.password,
+    });
+    if (ok) router.push("/feed"); // or your post-login route
   };
 
+  const emailError = errors.email?.message ?? backendFieldErrors?.email?.[0];
+  const passwordError = errors.password?.message ?? backendFieldErrors?.password?.[0];
+  console.log("emailError", emailError);
+  console.log("passwordError", passwordError);
   return (
     <div className="relative flex min-h-screen items-center justify-center overflow-hidden bg-gradient-to-br from-sky-100 via-indigo-50 to-violet-200 px-4 py-6">
       <div className="w-full max-w-md rounded-xl bg-white p-6 shadow">
@@ -56,6 +73,11 @@ export default function LoginPage() {
         </div>
 
         <form className="mt-6 flex flex-col gap-4" onSubmit={handleSubmit(onSubmit)} noValidate>
+              {serverError ? (
+        <p className="rounded-lg bg-red-50 px-3 py-2 text-center text-sm text-red-600">
+          {serverError}
+        </p>
+      ) : null}
           <div className="space-y-1.5">
             <label
               htmlFor="email"
@@ -77,8 +99,8 @@ export default function LoginPage() {
                 },
               })}
             />
-            {errors.email ? (
-              <p className="text-xs text-red-500">{errors.email.message}</p>
+            {emailError ? (
+              <p className="text-xs text-red-500">{emailError}</p>
             ) : null}
           </div>
 
@@ -103,8 +125,8 @@ export default function LoginPage() {
                 },
               })}
             />
-            {errors.password ? (
-              <p className="text-xs text-red-500">{errors.password.message}</p>
+            {passwordError ? (
+              <p className="text-xs text-red-500">{passwordError}</p>
             ) : null}
           </div>
 

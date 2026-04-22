@@ -3,8 +3,9 @@
 import Link from "next/link";
 import Image from "next/image";
 import { useForm } from "react-hook-form";
-import { registerApi } from "@/features/auth/services/register.api";
 import { useRouter } from "next/navigation";
+import { useRegisterStore } from "@/features/auth/stores/register.store";
+
 
 type RegisterFormValues = {
   username: string;
@@ -27,10 +28,24 @@ export default function RegisterPage() {
   });
 
   const router = useRouter();
+  const registerAccount = useRegisterStore((s) => s.registerAccount);
+  const serverError = useRegisterStore((s) => s.error);
+  const backendFieldErrors = useRegisterStore((s) => s.fieldErrors);
+  const clearRegisterError = useRegisterStore((s) => s.clearRegisterError);
   const onSubmit = async (data: RegisterFormValues) => {
-    await registerApi({ email: data.email, password: data.password });
-    router.push("/login");
+    clearRegisterError();
+    const ok = await registerAccount({
+      email: data.email,
+      password: data.password,
+    });
+    if (ok) router.push("/login");
   };
+  const usernameError = errors.username?.message ?? backendFieldErrors?.username?.[0];
+  const emailError = errors.email?.message ?? backendFieldErrors?.email?.[0];
+  const passwordError = errors.password?.message ?? backendFieldErrors?.password?.[0];
+  console.log("usernameError", usernameError);
+  console.log("emailError", emailError);
+  console.log("passwordError", passwordError);
 
   return (
     <div className="relative flex min-h-screen items-center justify-center overflow-hidden bg-gradient-to-br from-sky-100 via-indigo-50 to-violet-200 px-4 py-6">
@@ -63,6 +78,12 @@ export default function RegisterPage() {
 
         {/* Form */}
         <form className="mt-6 flex flex-col gap-4" onSubmit={handleSubmit(onSubmit)} noValidate>
+          {serverError ? (
+            <p className="rounded-lg bg-red-50 px-3 py-2 text-center text-sm text-red-600">
+              {serverError}
+            </p>
+          ) : null}
+                
           <div className="space-y-1.5">
             <label
               htmlFor="username"
@@ -79,13 +100,13 @@ export default function RegisterPage() {
               {...register("username", {
                 required: "Username is required",
                 minLength: {
-                  value: 3,
-                  message: "Username must be at least 3 characters",
+                  value: 8,
+                  message: "Password must be at least 8 characters",
                 },
               })}
             />
-            {errors.username ? (
-              <p className="text-xs text-red-500">{errors.username.message}</p>
+            {usernameError ? (
+              <p className="text-xs text-red-500">{usernameError}</p>
             ) : null}
           </div>
 
@@ -110,8 +131,8 @@ export default function RegisterPage() {
                 },
               })}
             />
-            {errors.email ? (
-              <p className="text-xs text-red-500">{errors.email.message}</p>
+            {emailError ? (
+              <p className="text-xs text-red-500">{emailError}</p>
             ) : null}
           </div>
 
@@ -136,8 +157,8 @@ export default function RegisterPage() {
                 },
               })}
             />
-            {errors.password ? (
-              <p className="text-xs text-red-500">{errors.password.message}</p>
+            {passwordError ? (
+              <p className="text-xs text-red-500">{passwordError}</p>
             ) : null}
           </div>
 
