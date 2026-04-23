@@ -7,4 +7,9 @@ export const createNoteSchema = z.object({
   visibility: z.enum(["public", "private"]).optional().default("private"),
 });
 
+export const patchProfileSchema = z.object({
+  name: z.string().trim().min(1, "Name is required").max(120),
+});
+export type PatchProfileInput = z.infer<typeof patchProfileSchema>;
+
 export type CreateNoteInput = z.infer<typeof createNoteSchema>;

@@ -63,10 +63,9 @@ export async function refreshController(req: Request, res: Response) {
   }
 
   try {
-    const { accessToken, refreshToken } = await refreshSession(oldRefreshToken);
-
-    res.cookie("refreshToken", refreshToken, refreshCookieOptions);
-    return res.status(200).json({ accessToken });
+    const { accessToken, refreshToken, user } = await refreshSession(oldRefreshToken);
+  res.cookie("refreshToken", refreshToken, refreshCookieOptions);
+  return res.status(200).json({ accessToken, user });
   } catch {
     return res.status(401).json({ message: "Unauthorized" });
   }

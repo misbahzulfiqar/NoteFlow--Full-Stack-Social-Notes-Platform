@@ -9,7 +9,7 @@ type Params = {
   sort?: "recent" | "oldest";
   page?: number;
   limit?: number;
-  visibility? "public"
+  visibility?: "public" | "private";
 };
 
 export function useMyPublicNotes(params: Params = {}) {

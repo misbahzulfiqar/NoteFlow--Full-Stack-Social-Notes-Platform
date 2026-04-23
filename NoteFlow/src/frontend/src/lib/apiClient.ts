@@ -1,5 +1,7 @@
 import axios, { type AxiosError, type InternalAxiosRequestConfig } from "axios";
 import { useAuthStore } from "@/store/authStore";
+import { getApiBaseUrl } from "@/lib/getApiBaseUrl";
+import type { AuthUser } from "@/store/authStore";
 
 const baseURL = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:5000/api";
 
@@ -63,11 +65,16 @@ apiClient.interceptors.response.use(
 
     isRefreshing = true;
     try {
-      const res = await axios.post<{ accessToken: string }>(
+      const res = await axios.post<{ accessToken: string; user: AuthUser }>(
         `${baseURL}/auth/refresh`,
         {},
         { withCredentials: true }
       );
+      
+      useAuthStore.getState().setSession({
+        accessToken: res.data.accessToken,
+        user: res.data.user,
+      });
 
       const accessToken = res.data.accessToken;
       useAuthStore.setState({ accessToken });
