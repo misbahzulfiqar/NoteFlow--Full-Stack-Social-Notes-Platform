@@ -6,6 +6,7 @@ import authRoutes from "./modules/auth/auth.routes";
 import { connectMongo } from "./config/db";
 import notesRoutes from "./modules/notes/notes.routes";
 import usersRoutes from "./modules/users/users.routes";
+import favoritesRoutes from "./modules/favorites/favorites.routes";
 
 
 const app = express();
@@ -23,6 +24,8 @@ app.use(cookieParser());
 app.use("/api/auth", authRoutes);
 app.use("/api/notes", notesRoutes);
 app.use("/api/users", usersRoutes);
+app.use("/api/favorites", favoritesRoutes);
+
 
 
 async function bootstrap() {

@@ -1,12 +1,12 @@
-// useMyNotes.ts
 "use client";
 
 import { useQuery } from "@tanstack/react-query";
-import { getMyNotes, type ListParams } from "../services/notes.service";
+import { getMyNoteById } from "../services/notes.service";
 
-export function useMyNotes(params: ListParams = {}) {
+export function useMyNotes(noteId: string | undefined) {
   return useQuery({
-    queryKey: ["notes", "mine", params],
-    queryFn: () => getMyNotes(params),
+    queryKey: ["notes", "mine", "one", noteId],
+    queryFn: () => getMyNoteById(noteId!),
+    enabled: Boolean(noteId),
   });
 }

@@ -1,9 +1,12 @@
 "use client";
 
 import Link from "next/link";
-import { useMemo, useState } from "react";
-import { useMyNotes } from "@/app/features/notes/hooks/useMyNotes";
+import { useEffect, useMemo, useState } from "react";
+import { useMyPrivateNotes } from "@/app/features/notes/hooks/useMyPrivateNotes";
 import type { Note } from "@/app/features/notes/types";
+import { NoteListPagination } from "@/app/features/notes/components/NoteListPagination";
+
+const PAGE_SIZE = 16;
 
 function timeAgo(dateIso: string) {
   const diffMs = Date.now() - new Date(dateIso).getTime();
@@ -43,38 +46,42 @@ function PrivateNoteCard({ note }: { note: Note }) {
         )}
       </Link>
 
-      <div className="p-3">
+      <div className="px-3">
         <div className="mb-1.5 flex items-start justify-between gap-2">
           <h3 className="line-clamp-1 text-base font-bold leading-6 text-slate-900">
             {note.title}
           </h3>
-          <button className="rounded-full px-1.5 text-slate-400 hover:bg-slate-100">
-            •••
-          </button>
+          <Link
+            href={`/notes/${note.id}/edit`}
+            className="shrink-0 rounded-lg px-2 py-1 text-xs font-semibold text-indigo-600 hover:bg-indigo-50"
+            onClick={(e) => e.stopPropagation()}
+          >
+            Edit
+          </Link>
         </div>
+      </div>
 
-        <p className="line-clamp-2 min-h-[40px] text-xs leading-5 text-slate-500">
-          {note.content}
-        </p>
+      <p className="px-3 line-clamp-2 min-h-[40px] text-xs leading-5 text-slate-500">
+        {note.content}
+      </p>
 
-        <div className="mt-3 flex flex-wrap gap-1.5">
-          {note.tags.slice(0, 3).map((tag) => (
-            <span
-              key={tag}
-              className="rounded-full bg-indigo-50 px-2 py-0.5 text-[11px] font-semibold text-indigo-500"
-            >
-              {tag}
-            </span>
-          ))}
-        </div>
-
-        <div className="mt-3 flex items-center justify-between text-xs">
-          <span className="inline-flex items-center gap-1.5 text-indigo-500">
-            <span>🔒</span>
-            <span className="font-semibold">Private</span>
+      <div className="px-3 mt-1 flex flex-wrap gap-1.5">
+        {note.tags.slice(0, 3).map((tag) => (
+          <span
+            key={tag}
+            className="rounded-full bg-indigo-50 px-2 py-0.5 text-[11px] font-semibold text-indigo-500"
+          >
+            {tag}
           </span>
-          <span className="text-slate-400">{timeAgo(note.createdAt)}</span>
-        </div>
+        ))}
+      </div>
+
+      <div className="p-3 mt-3 flex items-center justify-between text-xs">
+        <span className="inline-flex items-center gap-1.5 text-indigo-500">
+          <span>🔒</span>
+          <span className="font-semibold">Private</span>
+        </span>
+        <span className="text-slate-400">{timeAgo(note.createdAt)}</span>
       </div>
     </article>
   );
@@ -85,16 +92,19 @@ export default function PrivateNotesPage() {
   const [search, setSearch] = useState("");
   const [tag, setTag] = useState("");
   const [sort, setSort] = useState<"recent" | "oldest">("recent");
+  const [page, setPage] = useState(1);
 
-  const { data, isLoading, isError } = useMyNotes({
+  useEffect(() => {
+    setPage(1);
+  }, [search, tag, sort]);
+
+  const { data, isLoading, isError } = useMyPrivateNotes({
     search,
     tag,
     sort,
-    page: 1,
-    limit: 16,
-    visibility: "private",
+    page,
+    limit: PAGE_SIZE,
   });
-
   const notes = data?.notes ?? [];
 
   const tags = useMemo(() => {
@@ -178,6 +188,15 @@ export default function PrivateNotesPage() {
             ))}
           </section>
         )}
+
+        {!isLoading && !isError && notes.length > 0 ? (
+          <NoteListPagination
+            page={page}
+            total={data?.total}
+            limit={PAGE_SIZE}
+            onPageChange={setPage}
+          />
+        ) : null}
       </div>
     </main>
   );

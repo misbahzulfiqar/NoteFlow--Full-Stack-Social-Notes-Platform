@@ -11,13 +11,15 @@ function NavItem({
   href,
   label,
   pathname,
+  isActive,
 }: {
   href: string;
   label: string;
   pathname: string;
+  /** When set, used instead of `pathname === href` (e.g. `/n/*` for public notes). */
+  isActive?: (pathname: string, href: string) => boolean;
 }) {
-  const active = pathname === href;
-
+  const active = isActive ? isActive(pathname, href) : pathname === href;
   return (
     <Link
       href={href}
@@ -32,6 +34,7 @@ function NavItem({
     </Link>
   );
 }
+
 
 function SidebarAccountFooter() {
   const router = useRouter();
@@ -135,7 +138,7 @@ export default function MainLayout({ children }: { children: ReactNode }) {
             <NavItem href="/feed" label="All Feeds" pathname={pathname} />
             <NavItem href="/notes/new" label="Create Note" pathname={pathname} />
             <NavItem href="/notes/private" label="My Private Notes" pathname={pathname} />
-            <NavItem href="/n/public" label="My Public Notes" pathname={pathname} />
+            <NavItem href="/n/public" label="My Public Notes" pathname={pathname} isActive={(p, href) => p === href || (p.startsWith("/n/") && p.length > 3)} />
             <NavItem href="/favorites" label="Favorites" pathname={pathname} />
             <NavItem href="/profile" label="Profile" pathname={pathname} />
           </nav>

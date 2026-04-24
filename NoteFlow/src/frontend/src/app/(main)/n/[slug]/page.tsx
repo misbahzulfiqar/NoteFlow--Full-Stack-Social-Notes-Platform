@@ -1,9 +1,12 @@
 "use client";
 
 import Link from "next/link";
-import { useMemo, useState } from "react";
+import { useAuthStore } from "@/store/authStore";
+import { useEffect, useMemo, useState } from "react";
 import { usePublicNotes } from "@/app/features/notes/hooks/usePublicNotes";
 import type { Note } from "@/app/features/notes/types";
+import { NoteFavoriteHeart } from "@/app/features/favourites/components/NoteFavoriteHeart";
+import { NoteListPagination } from "@/app/features/notes/components/NoteListPagination";
 
 function timeAgo(dateIso: string) {
   const diffMs = Date.now() - new Date(dateIso).getTime();
@@ -25,6 +28,7 @@ function FallbackCover({ seed }: { seed: string }) {
 }
 
 function NoteCard({ note }: { note: Note }) {
+  const user = useAuthStore((s) => s.user);
   return (
     <article className="overflow-hidden rounded-xl bg-white shadow-md ring-1 ring-slate-200/70">
       <Link href={`/n/${note.slug}`} className="block">
@@ -37,10 +41,22 @@ function NoteCard({ note }: { note: Note }) {
       </Link>
 
       <div className="p-3">
-        <div className="mb-1.5 flex items-start justify-between gap-2">
-          <h3 className="line-clamp-1 text-base font-bold leading-6 text-slate-900">{note.title}</h3>
-          <button className="rounded-full px-1.5 text-slate-400 hover:bg-slate-100">•••</button>
+      <div className="mb-1.5 flex items-start justify-between gap-2">
+        <h3 className="line-clamp-1 text-base font-bold leading-6 text-slate-900">
+          {note.title}
+        </h3>
+        <div className="flex shrink-0 items-center gap-1">
+          {user?.id === note.ownerId ? (
+            <Link
+              href={`/notes/${note.id}/edit`}
+              className="rounded-lg px-2 py-0.5 text-[11px] font-semibold text-indigo-600 hover:bg-indigo-50"
+            >
+              Edit
+            </Link>
+          ) : null}
+          <NoteFavoriteHeart noteId={note.id} />
         </div>
+      </div>
 
         <p className="line-clamp-2 min-h-[40px] text-xs leading-5 text-slate-500">{note.content}</p>
 
@@ -72,8 +88,21 @@ export default function PublicNotesPage() {
   const [search, setSearch] = useState("");
   const [tag, setTag] = useState("");
   const [sort, setSort] = useState<"recent" | "oldest">("recent");
+  const [page, setPage] = useState(1);
 
-  const { data, isLoading, isError } = usePublicNotes({ search, tag, sort, page: 1, limit: 16 });
+  const PAGE_SIZE = 16;
+
+  useEffect(() => {
+    setPage(1);
+  }, [search, tag, sort]);
+  const { data, isLoading, isError } = usePublicNotes({
+    search,
+    tag,
+    sort,
+    page,
+    limit: PAGE_SIZE,
+  });
+
   const notes = data?.notes ?? [];
 
   const tags = useMemo(() => {
@@ -140,8 +169,17 @@ export default function PublicNotesPage() {
             {notes.map((note) => (
               <NoteCard key={note.id} note={note} />
             ))}
-          </section>
+                    </section>
         )}
+
+        {!isLoading && !isError && notes.length > 0 ? (
+          <NoteListPagination
+            page={page}
+            total={data?.total}
+            limit={PAGE_SIZE}
+            onPageChange={setPage}
+          />
+        ) : null}
       </div>
     </main>
   );

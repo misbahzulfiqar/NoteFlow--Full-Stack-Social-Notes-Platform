@@ -1,7 +1,7 @@
 import { randomBytes } from "node:crypto";
 import { Types } from "mongoose";
 import { NoteModel } from "../../models/Note.model";
-import type { CreateNoteInput } from "./notes.validation";
+import type { CreateNoteInput, UpdateNoteInput } from "./notes.validation";
 
 export type NoteResponse = {
   id: string;
@@ -24,6 +24,20 @@ type ListParams = {
   tag?: string;
   sort: "recent" | "oldest";
   visibility?: "public" | "private";
+};
+
+type NoteLean = {
+  _id: { toString(): string };
+  title: string;
+  content: string;
+  slug: string;
+  tags: string[];
+  coverImage?: string | null;
+  visibility: "public" | "private";
+  likes?: { length: number } | unknown[];
+  owner: { toString(): string };
+  createdAt: Date;
+  updatedAt: Date;
 };
 
 function buildSearchFilter(search?: string) {
@@ -51,7 +65,7 @@ export async function getPublicNotes(params: ListParams) {
   ]);
 
   return {
-    notes: docs.map((d) => toResponse(d as any)),
+    notes: docs.map((d) => toResponse(d as NoteLean)),
     total,
     page: params.page,
     limit: params.limit,
@@ -60,7 +74,7 @@ export async function getPublicNotes(params: ListParams) {
 
 export async function getPublicNoteBySlug(slug: string): Promise<NoteResponse | null> {
   const doc = await NoteModel.findOne({ slug, visibility: "public" }).lean();
-  return doc ? toResponse(doc as any) : null;
+  return doc ? toResponse(doc as NoteLean) : null;
 }
 
 export async function getOwnNotes(ownerId: string, params: ListParams) {
@@ -95,7 +109,7 @@ export async function getOwnNoteById(ownerId: string, noteId: string): Promise<N
     owner: new Types.ObjectId(ownerId),
   }).lean();
 
-  return doc ? toResponse(doc as any) : null;
+  return doc ? toResponse(doc as NoteLean) : null;
 }
 
 function slugify(title: string): string {
@@ -203,5 +217,82 @@ export async function updateNoteCover(
     throw new Error("Note not found");
   }
 
-  return toResponse(note);
+  return toResponse(note as NoteLean);
+}
+
+export async function updateNote(
+  ownerId: string,
+  noteId: string,
+  input: UpdateNoteInput,
+): Promise<NoteResponse> {
+  if (!Types.ObjectId.isValid(noteId)) {
+    throw new Error("Invalid note id");
+  }
+
+  const existing = await NoteModel.findOne({
+    _id: noteId,
+    owner: new Types.ObjectId(ownerId),
+  }).lean();
+
+  if (!existing) {
+    throw new Error("Note not found");
+  }
+
+  const ex = existing as NoteLean;
+  const title = input.title !== undefined ? input.title.trim() : ex.title;
+  const content = input.content !== undefined ? input.content : ex.content;
+  const tags =
+    input.tags !== undefined ? input.tags.map((t) => t.trim()) : ex.tags;
+  const visibility =
+    input.visibility !== undefined ? input.visibility : ex.visibility;
+
+  const titleChanged = input.title !== undefined && title !== ex.title;
+
+  if (titleChanged) {
+    const baseSlug = slugify(title);
+    for (let attempt = 0; attempt < 8; attempt += 1) {
+      const newSlug = `${baseSlug}-${randomSuffix(6)}`;
+      try {
+        const doc = await NoteModel.findOneAndUpdate(
+          { _id: noteId, owner: new Types.ObjectId(ownerId) },
+          { title, content, tags, visibility, slug: newSlug },
+          { new: true },
+        ).lean();
+        if (!doc) throw new Error("Note not found");
+        return toResponse(doc as NoteLean);
+      } catch (err: unknown) {
+        const code =
+          err && typeof err === "object" && "code" in err
+            ? (err as { code?: number }).code
+            : undefined;
+        if (code === 11000) continue;
+        throw err instanceof Error ? err : new Error("Failed to update note");
+      }
+    }
+    throw new Error("Could not allocate a unique slug");
+  }
+
+  const doc = await NoteModel.findOneAndUpdate(
+    { _id: noteId, owner: new Types.ObjectId(ownerId) },
+    { title, content, tags, visibility },
+    { new: true },
+  ).lean();
+
+  if (!doc) throw new Error("Note not found");
+  return toResponse(doc as NoteLean);
+}
+
+export async function deleteNote(ownerId: string, noteId: string): Promise<void> {
+  if (!Types.ObjectId.isValid(noteId)) {
+    throw new Error("Invalid note id");
+  }
+
+  const result = await NoteModel.deleteOne({
+    _id: noteId,
+    owner: new Types.ObjectId(ownerId),
+  });
+
+  if (result.deletedCount === 0) {
+    throw new Error("Note not found");
+  }
 }

@@ -6,6 +6,7 @@ import type { Note } from "@/app/features/notes/types";
 import { useAuthStore } from "@/store/authStore";
 import { useState } from "react";
 import { ProfileForm } from "@/users/components/ProfileForm";
+import { NoteFavoriteHeart } from "@/app/features/favourites/components/NoteFavoriteHeart";
 
 function timeAgo(dateIso: string) {
   const diffMs = Date.now() - new Date(dateIso).getTime();
@@ -45,17 +46,20 @@ function NoteCard({ note }: { note: Note }) {
       </Link>
 
       <div className="p-3">
-        <div className="mb-1.5 flex items-start justify-between gap-2">
-          <h3 className="line-clamp-1 text-base font-bold leading-6 text-slate-900">
-            {note.title}
-          </h3>
-          <button
-            type="button"
-            className="rounded-full px-1.5 text-slate-400 hover:bg-slate-100"
+      <div className="mb-1.5 flex items-start justify-between gap-2">
+        <h3 className="line-clamp-1 text-base font-bold leading-6 text-slate-900">
+          {note.title}
+        </h3>
+        <div className="flex shrink-0 items-center gap-1">
+          <NoteFavoriteHeart noteId={note.id} className="shrink-0" />
+          <Link
+            href={`/notes/${note.id}/edit`}
+            className="rounded-lg px-2 py-1 text-xs font-semibold text-indigo-600 hover:bg-indigo-50"
           >
-            •••
-          </button>
+            Edit
+          </Link>
         </div>
+      </div>
 
         <p className="line-clamp-2 min-h-[40px] text-xs leading-5 text-slate-500">
           {note.content}

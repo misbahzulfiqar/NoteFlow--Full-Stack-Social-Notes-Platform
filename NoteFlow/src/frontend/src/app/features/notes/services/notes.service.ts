@@ -43,6 +43,20 @@ export type GetPublicNotesResponse = {
   limit?: number;
 };
 
+export type UpdateNotePayload = Partial<CreateNotePayload>;
+
+export async function updateNote(
+  id: string,
+  payload: UpdateNotePayload,
+): Promise<CreateNoteResponse> {
+  const res = await apiClient.put<CreateNoteResponse>(`/notes/${id}`, payload);
+  return res.data;
+}
+
+export async function deleteNote(id: string): Promise<void> {
+  await apiClient.delete(`/notes/${id}`);
+}
+
 export async function createNote(payload: CreateNotePayload): Promise<CreateNoteResponse> {
   const res = await apiClient.post<CreateNoteResponse>("/notes", payload);
   return res.data;
