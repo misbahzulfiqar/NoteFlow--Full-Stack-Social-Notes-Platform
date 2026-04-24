@@ -5,6 +5,10 @@ import {
   removeFavorite,
 } from "../../services/favorites.service";
 
+function getSingleParam(value: string | string[] | undefined): string | undefined {
+  return Array.isArray(value) ? value[0] : value;
+}
+
 function parseListQuery(req: Request) {
   const page = Number(req.query.page ?? 1);
   const limit = Number(req.query.limit ?? 12);
@@ -29,11 +33,16 @@ export async function getFavoritesController(req: Request, res: Response) {
 }
 
 export async function addFavoriteController(req: Request, res: Response) {
+  
   if (!req.user) {
     return res.status(401).json({ message: "Unauthorized" });
   }
   try {
-    const result = await addFavorite(req.user.id, req.params.noteId);
+    const noteId = getSingleParam(req.params.noteId);
+      if (!noteId) {
+        return res.status(400).json({ message: "Invalid note id param" });
+      }
+      const result = await addFavorite(req.user.id, noteId);
     return res.status(201).json({
       message:
         result.alreadyFavorited ? "Already in favorites" : "Added to favorites",
@@ -51,7 +60,11 @@ export async function removeFavoriteController(req: Request, res: Response) {
     return res.status(401).json({ message: "Unauthorized" });
   }
   try {
-    await removeFavorite(req.user.id, req.params.noteId);
+    const noteId = getSingleParam(req.params.noteId);
+    if (!noteId) {
+      return res.status(400).json({ message: "Invalid note id param" });
+    }
+await removeFavorite(req.user.id, noteId);
     return res.json({ message: "Removed from favorites" });
   } catch (e) {
     const msg = e instanceof Error ? e.message : "Failed to remove";
