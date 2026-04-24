@@ -127,6 +127,7 @@ export async function loginUser(input: LoginInput): Promise<AuthResult> {
 export async function refreshSession(oldRefreshToken: string): Promise<{
   accessToken: string;
   refreshToken: string;
+  user: AuthUser;
 }> {
   const payload = jwt.verify(
     oldRefreshToken,
@@ -153,9 +154,13 @@ export async function refreshSession(oldRefreshToken: string): Promise<{
     userId: exists.userId,
     expiresAt: getRefreshExpiryDate(),
   });
-
+  const userDoc = await UserModel.findById(exists.userId).lean();
+  if (!userDoc) {
+    throw new Error("User not found");
+  }
   return {
     accessToken: newAccessToken,
     refreshToken: newRefreshToken,
+    user: toAuthUser(userDoc),
   };
 }

@@ -1,16 +1,34 @@
 import { Router } from "express";
 import { requireAuth } from "../../middleware/auth.middleware";
-import { createNoteController } from "./notes.controller";
 import { upload } from "../../middleware/upload.middleware";
-import { patchNoteCoverController } from "./notes.controller";
+import {
+  createNoteController,
+  deleteNoteController,
+  getOwnNoteByIdController,
+  getOwnNotesController,
+  getPublicNoteBySlugController,
+  getPublicNotesController,
+  patchNoteCoverController,
+  updateNoteController,
+} from "./notes.controller";
 
 const router = Router();
 
+router.get("/public", getPublicNotesController);
+router.get("/public/:slug", getPublicNoteBySlugController);
+
+router.get("/", requireAuth, getOwnNotesController);
 router.post("/", requireAuth, createNoteController);
+
 router.patch(
-    "/:id/cover",
-    requireAuth,
-    upload.single("cover"), // field name must match frontend FormData key "cover"
-    patchNoteCoverController
-  );
+  "/:id/cover",
+  requireAuth,
+  upload.single("cover"),
+  patchNoteCoverController,
+);
+router.put("/:id", requireAuth, updateNoteController);
+router.delete("/:id", requireAuth, deleteNoteController);
+
+router.get("/:id", requireAuth, getOwnNoteByIdController);
+
 export default router;

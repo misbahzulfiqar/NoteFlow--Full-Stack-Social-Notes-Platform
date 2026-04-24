@@ -1,4 +1,6 @@
-const API = "http://localhost:5000/api/auth";
+import { getApiBaseUrl } from "@/lib/getApiBaseUrl";
+
+const API = `${getApiBaseUrl()}/auth`;
 
 export async function loginApi(payload: { email: string; password: string }) {
   const res = await fetch(`${API}/login`, {

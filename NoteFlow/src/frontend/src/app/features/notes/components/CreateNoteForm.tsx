@@ -1,14 +1,22 @@
 "use client";
 
-import { useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { useCreateNote } from "@/app/features/notes/hooks/useCreateNote";
-import { createNote as createNoteRequest, uploadNoteCover } from "@/app/features/notes/services/notes.service";
+import { useMyNotes } from "@/app/features/notes/hooks/useMyNotes";
+import { useUpdateNote } from "@/app/features/notes/hooks/useUpdateNote";
+import { uploadNoteCover } from "@/app/features/notes/services/notes.service";
 import { getErrorMessage } from "@/lib/getErrorMessage";
 
 type Visibility = "public" | "private";
 
-export default function CreateNoteForm() {
+type Props = {
+  noteId?: string;
+};
+
+export default function CreateNoteForm({ noteId }: Props) {
+  const isEdit = Boolean(noteId);
+
   const [title, setTitle] = useState("");
   const [content, setContent] = useState("");
   const [tags, setTags] = useState("");
@@ -19,13 +27,28 @@ export default function CreateNoteForm() {
   const coverInputRef = useRef<HTMLInputElement>(null);
 
   const router = useRouter();
-  const { mutateAsync: createNote, isPending } = useCreateNote();
+  const { mutateAsync: createNote, isPending: isCreating } = useCreateNote();
+  const { mutateAsync: patchNote, isPending: isUpdating } = useUpdateNote();
+  const { data: loaded, isLoading: loadingNote, isError: loadError } =
+    useMyNotes(noteId);
+
+  useEffect(() => {
+    const n = loaded?.note;
+    if (!n || !isEdit) return;
+    setTitle(n.title);
+    setContent(n.content);
+    setTags(n.tags.join(", "));
+    setVisibility(n.visibility);
+  }, [loaded?.note, isEdit]);
 
   const titleCount = useMemo(() => title.length, [title]);
   const contentCount = useMemo(() => content.length, [content]);
 
+  const busy = isCreating || isUpdating || isCoverUploading;
+
   const handleCancel = () => {
-    router.push("/feed");
+    if (isEdit) router.back();
+    else router.push("/feed");
   };
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
@@ -45,11 +68,37 @@ export default function CreateNoteForm() {
         tags
           .split(",")
           .map((tag) => tag.trim())
-          .filter(Boolean)
-      )
+          .filter(Boolean),
+      ),
     );
 
     try {
+      if (isEdit && noteId) {
+        const { note } = await patchNote({
+          id: noteId,
+          payload: {
+            title: cleanTitle,
+            content: cleanContent,
+            tags: cleanTags,
+            visibility,
+          },
+        });
+
+        if (coverFile) {
+          setIsCoverUploading(true);
+          try {
+            await uploadNoteCover(note.id, coverFile);
+          } finally {
+            setIsCoverUploading(false);
+          }
+        }
+
+        if (note.visibility === "public") router.push(`/n/${note.slug}`);
+        else router.push(`/notes/${note.id}`);
+        router.refresh();
+        return;
+      }
+
       const response = await createNote({
         title: cleanTitle,
         content: cleanContent,
@@ -62,27 +111,34 @@ export default function CreateNoteForm() {
         setIsCoverUploading(true);
         try {
           await uploadNoteCover(note.id, coverFile);
-          console.log("[CreateNote] created note:", note);
-          console.log("[CreateNote] coverFile:", {
-            name: coverFile?.name,
-            type: coverFile?.type,
-            size: coverFile?.size,
-          });
         } finally {
           setIsCoverUploading(false);
         }
       }
 
-      if (note.visibility === "public") {
-        router.push(`/n/${note.slug}`);
-      } else {
-        router.push(`/notes/${note.id}`);
-      }
+      if (note.visibility === "public") router.push(`/n/${note.slug}`);
+      else router.push(`/notes/${note.id}`);
       router.refresh();
     } catch (error) {
       setFormError(getErrorMessage(error));
     }
   };
+
+  if (isEdit && loadingNote) {
+    return (
+      <div className="px-6 py-16 text-center text-sm text-[#8d92b6]">
+        Loading note…
+      </div>
+    );
+  }
+
+  if (isEdit && loadError) {
+    return (
+      <div className="px-6 py-16 text-center text-sm text-red-600">
+        Could not load this note.
+      </div>
+    );
+  }
 
   return (
     <form onSubmit={handleSubmit} className="px-6 py-8 lg:px-10">
@@ -90,10 +146,12 @@ export default function CreateNoteForm() {
         <div className="mb-8 flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
           <div>
             <h1 className="text-2xl font-bold tracking-[-0.02em] text-[#1f2347] lg:text-2xl">
-              Create Note
+              {isEdit ? "Edit Note" : "Create Note"}
             </h1>
             <p className="mt-1 text-sm text-[#8d92b6]">
-              Write something amazing today ✨
+              {isEdit
+                ? "Update your note and press Update"
+                : "Write something amazing today ✨"}
             </p>
           </div>
 
@@ -107,11 +165,17 @@ export default function CreateNoteForm() {
             </button>
             <button
               type="submit"
-              disabled={isPending}
+              disabled={busy || (isEdit && loadingNote)}
               className="inline-flex cursor-pointer items-center gap-2 rounded-xl bg-gradient-to-r from-[#8e78ff] to-[#6f8dff] px-5 py-2.5 text-sm font-semibold text-white shadow-[0_8px_18px_rgba(111,141,255,0.35)] transition hover:shadow-lg disabled:cursor-not-allowed disabled:opacity-70"
             >
               <SendIcon />
-              {isPending ? "Publishing..." : "Publish Note"}
+              {isEdit
+                ? isUpdating
+                  ? "Updating…"
+                  : "Update"
+                : isCreating
+                  ? "Publishing…"
+                  : "Publish Note"}
             </button>
           </div>
         </div>
@@ -158,48 +222,47 @@ export default function CreateNoteForm() {
           </div>
 
           <div className="grid grid-cols-1 gap-5 lg:grid-cols-2">
-          <div className="rounded-2xl bg-white p-5 shadow-[0_6px_16px_rgba(73,85,156,0.06)]">
-    <label className="mb-2 block text-sm font-semibold text-[#353b67]">
-      Cover Image (Optional)
-    </label>
-    <input
-      ref={coverInputRef}
-      type="file"
-      accept="image/jpeg,image/png,image/webp,image/gif"
-      className="hidden"
-      id="note-cover-input"
-      onChange={(e) => {
-        const file = e.target.files?.[0] ?? null;
-        setCoverFile(file);
-      }}
-    />
-    <label
-      htmlFor="note-cover-input"
-      className="flex w-full cursor-pointer flex-col items-center rounded-xl bg-[#fbfcff] px-4 py-6 text-center transition hover:bg-[#f4f7ff]"
-    >
-      <div className="mx-auto mb-2 flex h-10 w-10 items-center justify-center rounded-full bg-[#eef1ff] text-[#7f83d7]">
-        <UploadIcon />
-      </div>
-      <p className="text-sm font-medium text-[#5f668f]">
-        {coverFile ? coverFile.name : "Upload cover image"}
-      </p>
-      <p className="mt-1 text-xs text-[#9aa0c5]">
-        JPG, PNG, WebP, GIF up to 5MB
-      </p>
-    </label>
-    {coverFile ? (
-      <button
-        type="button"
-        className="mt-2 text-xs font-medium text-[#6f8dff] underline"
-        onClick={() => {
-          setCoverFile(null);
-          if (coverInputRef.current) coverInputRef.current.value = "";
-        }}
-      >
-        Remove file
-      </button>
-    ) : null}
-  </div>
+            <div className="rounded-2xl bg-white p-5 shadow-[0_6px_16px_rgba(73,85,156,0.06)]">
+              <label className="mb-2 block text-sm font-semibold text-[#353b67]">
+                Cover Image (Optional)
+              </label>
+              <input
+                ref={coverInputRef}
+                type="file"
+                accept="image/jpeg,image/png,image/webp,image/gif"
+                className="hidden"
+                id="note-cover-input"
+                onChange={(e) => {
+                  setCoverFile(e.target.files?.[0] ?? null);
+                }}
+              />
+              <label
+                htmlFor="note-cover-input"
+                className="flex w-full cursor-pointer flex-col items-center rounded-xl bg-[#fbfcff] px-4 py-6 text-center transition hover:bg-[#f4f7ff]"
+              >
+                <div className="mx-auto mb-2 flex h-10 w-10 items-center justify-center rounded-full bg-[#eef1ff] text-[#7f83d7]">
+                  <UploadIcon />
+                </div>
+                <p className="text-sm font-medium text-[#5f668f]">
+                  {coverFile ? coverFile.name : "Upload cover image"}
+                </p>
+                <p className="mt-1 text-xs text-[#9aa0c5]">
+                  JPG, PNG, WebP, GIF up to 5MB
+                </p>
+              </label>
+              {coverFile ? (
+                <button
+                  type="button"
+                  className="mt-2 text-xs font-medium text-[#6f8dff] underline"
+                  onClick={() => {
+                    setCoverFile(null);
+                    if (coverInputRef.current) coverInputRef.current.value = "";
+                  }}
+                >
+                  Remove file
+                </button>
+              ) : null}
+            </div>
 
             <div className="rounded-2xl bg-white p-5 shadow-[0_6px_16px_rgba(73,85,156,0.06)]">
               <label className="mb-3 block text-sm font-semibold text-[#353b67]">
@@ -253,16 +316,6 @@ export default function CreateNoteForm() {
               {contentCount.toLocaleString()}/200,000
             </span>
           </div>
-        </div>
-
-        <div className="mx-auto mt-5 flex max-w-4xl justify-end">
-          <button
-            type="submit"
-            disabled={isPending}
-            className="inline-flex cursor-pointer items-center gap-2 rounded-xl bg-gradient-to-r from-[#8e78ff] to-[#6f8dff] px-5 py-2.5 text-sm font-semibold text-white shadow-[0_8px_18px_rgba(111,141,255,0.35)] transition hover:shadow-lg disabled:cursor-not-allowed disabled:opacity-70"
-          >
-            {isPending ? "Creating..." : "Create Note"}
-          </button>
         </div>
       </div>
     </form>
@@ -376,8 +429,3 @@ const CheckIcon = () => (
     <path d="m6 12 4 4 8-8" />
   </svg>
 );
-
-
-
-
-

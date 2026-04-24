@@ -6,7 +6,7 @@ const refreshCookieOptions = {
   httpOnly: true,
   secure: process.env.NODE_ENV === "production",
   sameSite: "lax" as const,
-  path: "/api/auth",
+  path: "/",
   maxAge: 7 * 24 * 60 * 60 * 1000,
 };
 
@@ -63,10 +63,9 @@ export async function refreshController(req: Request, res: Response) {
   }
 
   try {
-    const { accessToken, refreshToken } = await refreshSession(oldRefreshToken);
-
-    res.cookie("refreshToken", refreshToken, refreshCookieOptions);
-    return res.status(200).json({ accessToken });
+    const { accessToken, refreshToken, user } = await refreshSession(oldRefreshToken);
+  res.cookie("refreshToken", refreshToken, refreshCookieOptions);
+  return res.status(200).json({ accessToken, user });
   } catch {
     return res.status(401).json({ message: "Unauthorized" });
   }
