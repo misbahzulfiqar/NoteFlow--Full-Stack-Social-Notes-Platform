@@ -50,8 +50,7 @@ function buildSearchFilter(search?: string) {
 
 export async function getPublicNotes(params: ListParams) {
   const skip = (params.page - 1) * params.limit;
-  const sort = params.sort === "oldest" ? { createdAt: 1 } : { createdAt: -1 };
-
+  const sort = { createdAt: params.sort === "oldest" ? 1 : -1 } as const;
   const filter: Record<string, unknown> = {
     visibility: "public",
     ...buildSearchFilter(params.search),
@@ -79,7 +78,7 @@ export async function getPublicNoteBySlug(slug: string): Promise<NoteResponse | 
 
 export async function getOwnNotes(ownerId: string, params: ListParams) {
   const skip = (params.page - 1) * params.limit;
-  const sort = params.sort === "oldest" ? { createdAt: 1 } : { createdAt: -1 };
+  const sort = { createdAt: params.sort === "oldest" ? 1 : -1 } as const;
 
   const filter: Record<string, unknown> = {
     owner: new Types.ObjectId(ownerId),
