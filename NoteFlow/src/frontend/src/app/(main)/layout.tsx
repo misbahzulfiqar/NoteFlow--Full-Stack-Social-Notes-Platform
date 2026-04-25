@@ -6,6 +6,7 @@ import { usePathname, useRouter } from "next/navigation";
 import type { ReactNode } from "react";
 import axios from "axios";
 import { useAuthStore } from "@/store/authStore";
+import { getApiBaseUrl } from "@/lib/getApiBaseUrl";
 
 function NavItem({
   href,
@@ -39,7 +40,7 @@ function NavItem({
 function SidebarAccountFooter() {
   const router = useRouter();
   const user = useAuthStore((s) => s.user);
-  const apiBase = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:5000/api";
+  const apiBase = getApiBaseUrl();
 
   const displayName =
   (user?.name && user.name.trim()) ||
@@ -126,7 +127,6 @@ export default function MainLayout({ children }: { children: ReactNode }) {
                 fill
                 sizes="40px"
                 className="object-cover"
-                priority
               />
             </div>
             <span className="text-xl font-bold tracking-wide text-[#287feb]">

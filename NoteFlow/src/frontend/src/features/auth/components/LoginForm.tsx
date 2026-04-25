@@ -37,6 +37,7 @@ export default function LoginPage() {
               src="/noteflow-logo.jpg"
               alt="NoteFlow logo"
               fill
+              sizes="48px"
               className="object-cover"
               priority
             />
