@@ -2,6 +2,18 @@ import { getApiBaseUrl } from "@/lib/getApiBaseUrl";
 
 const API = `${getApiBaseUrl()}/auth`;
 
+async function parseResponseBody(res: Response): Promise<unknown> {
+  const contentType = res.headers.get("content-type") ?? "";
+  if (contentType.includes("application/json")) {
+    return res.json();
+  }
+
+  const text = await res.text();
+  return {
+    message: text || "Unexpected non-JSON response from server.",
+  };
+}
+
 export async function loginApi(payload: { email: string; password: string }) {
   const res = await fetch(`${API}/login`, {
     method: "POST",
@@ -10,6 +22,7 @@ export async function loginApi(payload: { email: string; password: string }) {
     body: JSON.stringify(payload),
   });
 
-  if (!res.ok) throw await res.json();
-  return res.json();
+  const body = await parseResponseBody(res);
+  if (!res.ok) throw body;
+  return body;
 }

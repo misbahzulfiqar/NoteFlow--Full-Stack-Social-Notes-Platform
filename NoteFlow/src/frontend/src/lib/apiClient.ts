@@ -3,7 +3,7 @@ import { useAuthStore } from "@/store/authStore";
 import { getApiBaseUrl } from "@/lib/getApiBaseUrl";
 import type { AuthUser } from "@/store/authStore";
 
-const baseURL = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:5000/api";
+const baseURL = getApiBaseUrl();
 
 export const apiClient = axios.create({
   baseURL,
