@@ -7,7 +7,7 @@ if (!process.env.VERCEL) {
   loadEnv({ path: path.resolve(process.cwd(), "../backend/.env") });
 }
 
-/** Notes/favorites/users stay on Express unless you migrate them to Route Handlers. */
+/** Notes + auth are Next Route Handlers. Proxy favorites/users to Express when BACKEND_PROXY_ORIGIN is set. */
 const fromEnv = process.env.BACKEND_PROXY_ORIGIN?.trim().replace(/\/$/, "") ?? "";
 const backendOrigin =
   fromEnv || (process.env.VERCEL ? "" : "http://localhost:5000");
@@ -16,10 +16,7 @@ const nextConfig: NextConfig = {
   typedRoutes: false,
   async rewrites() {
     if (!backendOrigin) return [];
-    // Auth lives in Next.js Route Handlers. Optionally proxy other modules to external Express.
     return [
-      { source: "/api/notes", destination: `${backendOrigin}/api/notes` },
-      { source: "/api/notes/:path*", destination: `${backendOrigin}/api/notes/:path*` },
       { source: "/api/favorites", destination: `${backendOrigin}/api/favorites` },
       { source: "/api/favorites/:path*", destination: `${backendOrigin}/api/favorites/:path*` },
       { source: "/api/users", destination: `${backendOrigin}/api/users` },
