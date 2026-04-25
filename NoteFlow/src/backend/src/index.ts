@@ -11,9 +11,14 @@ import favoritesRoutes from "./modules/favorites/favorites.routes";
 
 const app = express();
 
+const corsOrigins = (process.env.CLIENT_ORIGINS ?? "http://localhost:3000")
+  .split(",")
+  .map((s) => s.trim())
+  .filter(Boolean);
+
 app.use(
   cors({
-    origin: "http://localhost:3000",
+    origin: corsOrigins,
     credentials: true,
   })
 );

@@ -23,12 +23,6 @@ apiClient.interceptors.request.use((config: InternalAxiosRequestConfig) => {
   if (token) {
     config.headers.Authorization = `Bearer ${token}`;
   }
-  console.log("[apiClient][request]", {
-    url: config.url,
-    method: config.method,
-    hasToken: !!token,
-    authHeader: config.headers?.Authorization ? "present" : "missing",
-  });
   return config;
 });
 

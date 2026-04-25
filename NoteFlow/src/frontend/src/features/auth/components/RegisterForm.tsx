@@ -42,6 +42,7 @@ export default function RegisterPage() {
               src="/noteflow-logo.jpg"
               alt="NoteFlow logo"
               fill
+              sizes="48px"
               className="object-cover"
               priority
             />
