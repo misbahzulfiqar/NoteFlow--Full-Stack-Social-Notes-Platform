@@ -42,8 +42,6 @@ export default function LoginPage() {
 
   const emailError = errors.email?.message ?? backendFieldErrors?.email?.[0];
   const passwordError = errors.password?.message ?? backendFieldErrors?.password?.[0];
-  console.log("emailError", emailError);
-  console.log("passwordError", passwordError);
   return (
     <div className="relative flex min-h-screen items-center justify-center overflow-hidden bg-gradient-to-br from-sky-100 via-indigo-50 to-violet-200 px-4 py-6">
       <div className="w-full max-w-md rounded-xl bg-white p-6 shadow">
@@ -54,6 +52,7 @@ export default function LoginPage() {
               src="/noteflow-logo.jpg"
               alt="NoteFlow logo"
               fill
+              sizes="48px"
               className="object-cover"
               priority
             />
