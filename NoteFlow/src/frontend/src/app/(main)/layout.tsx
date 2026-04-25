@@ -136,8 +136,20 @@ export default function MainLayout({ children }: { children: ReactNode }) {
 
           <nav className="flex-1 space-y-2">
             <NavItem href="/feed" label="All Feeds" pathname={pathname} />
-            <NavItem href="/notes/new" label="Create Note" pathname={pathname} />
-            <NavItem href="/notes/private" label="My Private Notes" pathname={pathname} />
+            <NavItem
+              href="/notes/new"
+              label="Create Note"
+              pathname={pathname}
+              isActive={(p) => p === "/notes/new"}
+            />
+            <NavItem
+              href="/notes/private"
+              label="My Private Notes"
+              pathname={pathname}
+              isActive={(p) =>
+                p === "/notes/private" || (p.startsWith("/notes/") && p !== "/notes/new")
+              }
+            />
             <NavItem href="/n/public" label="My Public Notes" pathname={pathname} isActive={(p, href) => p === href || (p.startsWith("/n/") && p.length > 3)} />
             <NavItem href="/favorites" label="Favorites" pathname={pathname} />
             <NavItem href="/profile" label="Profile" pathname={pathname} />
