@@ -5,6 +5,7 @@ const backendOrigin =
   "http://localhost:5000";
 
 const nextConfig: NextConfig = {
+  typedRoutes: false,
   async rewrites() {
     return [
       {

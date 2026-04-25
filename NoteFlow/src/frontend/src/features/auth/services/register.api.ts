@@ -3,10 +3,10 @@ import { getApiBaseUrl } from "@/lib/getApiBaseUrl";
 
 const API = `${getApiBaseUrl()}/auth`;
 
-async function parseResponseBody(res: Response): Promise<unknown> {
+async function parseResponseBody<T>(res: Response): Promise<T | { message: string }> {
   const contentType = res.headers.get("content-type") ?? "";
   if (contentType.includes("application/json")) {
-    return res.json();
+    return (await res.json()) as T;
   }
 
   const text = await res.text();
@@ -23,7 +23,7 @@ export async function registerApi(payload: { email: string; password: string }) 
     body: JSON.stringify(payload),
   });
 
-  const body = await parseResponseBody(res);
+  const body = await parseResponseBody<Record<string, unknown>>(res);
   if (!res.ok) throw body;
-  return body;
+  return body as Record<string, unknown>;
 }

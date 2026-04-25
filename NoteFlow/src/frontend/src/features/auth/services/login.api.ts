@@ -1,20 +1,26 @@
 import { getApiBaseUrl } from "@/lib/getApiBaseUrl";
+import type { AuthUser } from "@/store/authStore";
 
 const API = `${getApiBaseUrl()}/auth`;
 
-async function parseResponseBody(res: Response): Promise<unknown> {
+type LoginResponse = {
+  accessToken: string;
+  user: AuthUser;
+};
+
+async function parseResponseBody<T>(res: Response): Promise<T | { message: string }> {
   const contentType = res.headers.get("content-type") ?? "";
   if (contentType.includes("application/json")) {
-    return res.json();
+    return (await res.json()) as T;
   }
 
   const text = await res.text();
   return {
-    message: text || "Unexpected non JSON response from the server.",
+    message: text || "Unexpected non-JSON response from server.",
   };
 }
 
-export async function loginApi(payload: { email: string; password: string }) {
+export async function loginApi(payload: { email: string; password: string }): Promise<LoginResponse> {
   const res = await fetch(`${API}/login`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
@@ -22,7 +28,7 @@ export async function loginApi(payload: { email: string; password: string }) {
     body: JSON.stringify(payload),
   });
 
-  const body = await parseResponseBody(res);
+  const body = await parseResponseBody<LoginResponse>(res);
   if (!res.ok) throw body;
-  return body;
+  return body as LoginResponse;
 }
