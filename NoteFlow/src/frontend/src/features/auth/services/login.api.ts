@@ -10,7 +10,7 @@ async function parseResponseBody(res: Response): Promise<unknown> {
 
   const text = await res.text();
   return {
-    message: text || "Unexpected non-JSON response from server.",
+    message: text || "Unexpected non JSON response from the server.",
   };
 }
 
