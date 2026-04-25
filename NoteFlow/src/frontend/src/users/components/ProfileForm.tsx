@@ -9,7 +9,7 @@ import { getErrorMessage } from "@/lib/getErrorMessage";
 import { useAuthStore } from "@/store/authStore";
 
 const schema = z.object({
-  name: z.string().trim().min(1, "Name is required").max(120),
+  name: z.string().trim().min(1, "Name required").max(120),
 });
 
 type FormValues = z.infer<typeof schema>;
