@@ -1,12 +1,4 @@
-/**
- * Express API base URL (includes `/api` path prefix), per project architecture.
- *
- * - **Local:** defaults to `http://localhost:5000/api` when unset.
- * - **Vercel / production:** set `NEXT_PUBLIC_API_URL` to your deployed API
- *   origin with `/api` (e.g. `https://noteflow-api.railway.app/api`). The
- *   Next app and Express API are different origins; the browser must call the
- *   API URL directly (with CORS + credentials).
- */
+
 function trimTrailingSlash(s: string) {
   return s.replace(/\/$/, "");
 }
