@@ -1,8 +1,8 @@
 import "dotenv/config";
 import mongoose from "mongoose";
 
-import { app } from "../src/app";
-import { connectMongo } from "../src/config/db";
+import { app } from "../../backend/src/app";
+import { connectMongo } from "../../backend/src/config/db";
 
 let connectPromise: Promise<void> | null = null;
 
