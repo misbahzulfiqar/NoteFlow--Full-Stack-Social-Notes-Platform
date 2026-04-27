@@ -147,10 +147,16 @@ export default function MainLayout({ children }: { children: ReactNode }) {
               label="My Private Notes"
               pathname={pathname}
               isActive={(p) =>
-                p === "/notes/private" || (p.startsWith("/notes/") && p !== "/notes/new")
+                p === "/notes/private" ||
+                /^\/notes\/[a-f0-9]{24}$/i.test(p)
               }
             />
-            <NavItem href="/n/public" label="My Public Notes" pathname={pathname} isActive={(p, href) => p === href || (p.startsWith("/n/") && p.length > 3)} />
+            <NavItem
+              href="/notes/public"
+              label="My Public Notes"
+              pathname={pathname}
+              isActive={(p) => p === "/notes/public"}
+            />
             <NavItem href="/favorites" label="Favorites" pathname={pathname} />
             <NavItem href="/profile" label="Profile" pathname={pathname} />
           </nav>

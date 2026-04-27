@@ -1,6 +1,7 @@
 import { create } from "zustand";
 
 import { registerApi } from "@/features/auth/services/register.api";
+import { useAuthStore } from "@/store/authStore";
 
 type AuthFieldErrors = Partial<Record<"username" | "email" | "password", string[]>>;
 
@@ -56,7 +57,11 @@ export const useRegisterStore = create<RegisterState>((set) => ({
   registerAccount: async (payload) => {
     set({ error: null, fieldErrors: null });
     try {
-      await registerApi(payload);
+      const data = await registerApi(payload);
+      useAuthStore.getState().setSession({
+        accessToken: data.accessToken,
+        user: data.user,
+      });
       return true;
     } catch (e) {
       const fieldErrors = getFieldErrors(e);

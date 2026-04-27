@@ -1,4 +1,7 @@
+import { Types } from "mongoose";
 import { UserModel } from "../../models/User.model";
+import { listPublicNotesByOwner } from "../notes/notes.service";
+import type { NoteResponse } from "../notes/notes.service";
 
 export type PublicUser = {
   id: string;
@@ -41,4 +44,15 @@ export async function updateUserProfile(
   }
 
   return toPublicUser(doc);
+}
+
+export async function getUserPublicProfile(userId: string): Promise<{
+  user: PublicUser;
+  notes: NoteResponse[];
+} | null> {
+  if (!Types.ObjectId.isValid(userId)) return null;
+  const user = await UserModel.findById(userId).lean();
+  if (!user) return null;
+  const notes = await listPublicNotesByOwner(userId, 100);
+  return { user: toPublicUser(user), notes };
 }

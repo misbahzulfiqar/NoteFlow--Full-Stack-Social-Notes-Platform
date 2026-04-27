@@ -4,7 +4,7 @@ import type { CreateNoteResponse, Note, NoteVisibility } from "../types";
 export type ListParams = {
   search?: string;
   tag?: string;
-  sort?: "recent" | "oldest";
+  sort?: "recent" | "oldest" | "popular";
   page?: number;
   limit?: number;
   visibility?: "public" | "private";
@@ -19,7 +19,6 @@ export type ListResponse = {
 
 export type SingleNoteResponse = { note: Note };
 
-
 export type CreateNotePayload = {
   title: string;
   content: string;
@@ -30,7 +29,7 @@ export type CreateNotePayload = {
 export type GetPublicNotesParams = {
   search?: string;
   tag?: string;
-  sort?: "recent" | "oldest";
+  sort?: "recent" | "oldest" | "popular";
   page?: number;
   limit?: number;
 };
@@ -44,6 +43,8 @@ export type GetPublicNotesResponse = {
 };
 
 export type UpdateNotePayload = Partial<CreateNotePayload>;
+
+export type ToggleLikeResponse = { liked: boolean; likesCount: number };
 
 export async function updateNote(
   id: string,
@@ -69,7 +70,7 @@ export async function uploadNoteCover(noteId: string, file: File): Promise<void>
 }
 
 export async function getPublicNotes(params: GetPublicNotesParams = {}): Promise<GetPublicNotesResponse> {
-  const res = await apiClient.get<GetPublicNotesResponse>("/notes/public", {
+  const res = await apiClient.get<GetPublicNotesResponse>("/feed", {
     params: {
       search: params.search,
       tag: params.tag,
@@ -96,11 +97,17 @@ export async function getMyNotes(params: ListParams = {}): Promise<ListResponse>
 }
 
 export async function getPublicNoteBySlug(slug: string): Promise<SingleNoteResponse> {
-  const res = await apiClient.get<SingleNoteResponse>(`/notes/public/${slug}`);
+  const enc = encodeURIComponent(slug);
+  const res = await apiClient.get<SingleNoteResponse>(`/feed/${enc}`);
   return res.data;
 }
 
 export async function getMyNoteById(id: string): Promise<SingleNoteResponse> {
   const res = await apiClient.get<SingleNoteResponse>(`/notes/${id}`);
+  return res.data;
+}
+
+export async function toggleFeedNoteLike(noteId: string): Promise<ToggleLikeResponse> {
+  const res = await apiClient.post<ToggleLikeResponse>(`/feed/${noteId}/like`);
   return res.data;
 }

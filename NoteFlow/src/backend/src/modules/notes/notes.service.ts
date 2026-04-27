@@ -17,14 +17,16 @@ export type NoteResponse = {
   updatedAt: string;
 };
 
-type ListParams = {
+export type NoteListParams = {
   page: number;
   limit: number;
   search?: string;
   tag?: string;
-  sort: "recent" | "oldest";
+  sort: "recent" | "oldest" | "popular";
   visibility?: "public" | "private";
 };
+
+type ListParams = NoteListParams;
 
 type NoteLean = {
   _id: { toString(): string };
@@ -50,7 +52,6 @@ function buildSearchFilter(search?: string) {
 
 export async function getPublicNotes(params: ListParams) {
   const skip = (params.page - 1) * params.limit;
-  const sort = { createdAt: params.sort === "oldest" ? 1 : -1 } as const;
   const filter: Record<string, unknown> = {
     visibility: "public",
     ...buildSearchFilter(params.search),
@@ -58,6 +59,36 @@ export async function getPublicNotes(params: ListParams) {
 
   if (params.tag) filter.tags = params.tag;
 
+  if (params.sort === "popular") {
+    const [rawDocs, total] = await Promise.all([
+      NoteModel.aggregate([
+        { $match: filter },
+        {
+          $addFields: {
+            likesCountAgg: { $size: { $ifNull: ["$likes", []] } },
+          },
+        },
+        { $sort: { likesCountAgg: -1, createdAt: -1 } },
+        { $skip: skip },
+        { $limit: params.limit },
+      ]),
+      NoteModel.countDocuments(filter),
+    ]);
+
+    const notes = rawDocs.map((d) => {
+      const doc = d as NoteLean & { likes?: unknown[] };
+      return toResponse(doc);
+    });
+
+    return {
+      notes,
+      total,
+      page: params.page,
+      limit: params.limit,
+    };
+  }
+
+  const sort = { createdAt: params.sort === "oldest" ? 1 : -1 } as const;
   const [docs, total] = await Promise.all([
     NoteModel.find(filter).sort(sort).skip(skip).limit(params.limit).lean(),
     NoteModel.countDocuments(filter),
@@ -78,7 +109,6 @@ export async function getPublicNoteBySlug(slug: string): Promise<NoteResponse | 
 
 export async function getOwnNotes(ownerId: string, params: ListParams) {
   const skip = (params.page - 1) * params.limit;
-  const sort = { createdAt: params.sort === "oldest" ? 1 : -1 } as const;
 
   const filter: Record<string, unknown> = {
     owner: new Types.ObjectId(ownerId),
@@ -88,13 +118,38 @@ export async function getOwnNotes(ownerId: string, params: ListParams) {
   if (params.tag) filter.tags = params.tag;
   if (params.visibility) filter.visibility = params.visibility;
 
+  if (params.sort === "popular") {
+    const [rawDocs, total] = await Promise.all([
+      NoteModel.aggregate([
+        { $match: filter },
+        {
+          $addFields: {
+            likesCountAgg: { $size: { $ifNull: ["$likes", []] } },
+          },
+        },
+        { $sort: { likesCountAgg: -1, createdAt: -1 } },
+        { $skip: skip },
+        { $limit: params.limit },
+      ]),
+      NoteModel.countDocuments(filter),
+    ]);
+
+    return {
+      notes: rawDocs.map((d) => toResponse(d as NoteLean)),
+      total,
+      page: params.page,
+      limit: params.limit,
+    };
+  }
+
+  const sort = { createdAt: params.sort === "oldest" ? 1 : -1 } as const;
   const [docs, total] = await Promise.all([
     NoteModel.find(filter).sort(sort).skip(skip).limit(params.limit).lean(),
     NoteModel.countDocuments(filter),
   ]);
 
   return {
-    notes: docs.map((d) => toResponse(d as any)),
+    notes: docs.map((d) => toResponse(d as NoteLean)),
     total,
     page: params.page,
     limit: params.limit,
@@ -294,4 +349,52 @@ export async function deleteNote(ownerId: string, noteId: string): Promise<void>
   if (result.deletedCount === 0) {
     throw new Error("Note not found");
   }
+}
+
+export async function toggleNoteLike(
+  noteId: string,
+  userId: string
+): Promise<{ liked: boolean; likesCount: number }> {
+  if (!Types.ObjectId.isValid(noteId)) {
+    throw new Error("Invalid note id");
+  }
+  const nid = new Types.ObjectId(noteId);
+  const uid = new Types.ObjectId(userId);
+
+  const note = await NoteModel.findOne({
+    _id: nid,
+    visibility: "public",
+  }).select("likes");
+
+  if (!note) {
+    throw new Error("Note not found");
+  }
+
+  const already = note.likes.some((id) => String(id) === String(uid));
+  if (already) {
+    await NoteModel.updateOne({ _id: nid }, { $pull: { likes: uid } });
+  } else {
+    await NoteModel.updateOne({ _id: nid }, { $addToSet: { likes: uid } });
+  }
+
+  const updated = await NoteModel.findById(nid).select("likes").lean();
+  const likes = (updated?.likes as unknown[] | undefined) ?? [];
+  return { liked: !already, likesCount: likes.length };
+}
+
+export async function listPublicNotesByOwner(
+  ownerId: string,
+  limit = 100
+): Promise<NoteResponse[]> {
+  if (!Types.ObjectId.isValid(ownerId)) {
+    return [];
+  }
+  const docs = await NoteModel.find({
+    owner: new Types.ObjectId(ownerId),
+    visibility: "public",
+  })
+    .sort({ createdAt: -1 })
+    .limit(limit)
+    .lean();
+  return docs.map((d) => toResponse(d as NoteLean));
 }

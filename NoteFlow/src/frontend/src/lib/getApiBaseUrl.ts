@@ -1,12 +1,28 @@
 /**
- * On Vercel, `NEXT_PUBLIC_VERCEL_URL` is set. A wrong `NEXT_PUBLIC_API_URL` (e.g. localhost)
- * makes the browser call the wrong host → 404 HTML and JSON parse errors.
+ * Express API base URL (includes `/api` path prefix), per project architecture.
+ *
+ * - **Local:** defaults to `http://localhost:5000/api` when unset.
+ * - **Vercel / production:** set `NEXT_PUBLIC_API_URL` to your deployed API
+ *   origin with `/api` (e.g. `https://noteflow-api.railway.app/api`). The
+ *   Next app and Express API are different origins; the browser must call the
+ *   API URL directly (with CORS + credentials).
  */
+function trimTrailingSlash(s: string) {
+  return s.replace(/\/$/, "");
+}
+
 export function getApiBaseUrl(): string {
-  if (process.env.NEXT_PUBLIC_VERCEL_URL) {
-    return "/api";
+  const explicit = trimTrailingSlash(process.env.NEXT_PUBLIC_API_URL?.trim() ?? "");
+
+  if (explicit) {
+    return explicit;
   }
-  const v = process.env.NEXT_PUBLIC_API_URL?.trim();
-  if (v) return v.replace(/\/$/, "");
-  return "/api";
+
+  if (process.env.VERCEL === "1") {
+    console.warn(
+      "[NoteFlow] Set NEXT_PUBLIC_API_URL to your Express API (e.g. https://api.example.com/api) so the deployed app can reach the backend."
+    );
+  }
+
+  return "http://localhost:5000/api";
 }

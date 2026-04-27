@@ -1,7 +1,12 @@
-
 import { getApiBaseUrl } from "@/lib/getApiBaseUrl";
+import type { AuthUser } from "@/store/authStore";
 
 const API = `${getApiBaseUrl()}/auth`;
+
+export type RegisterResponse = {
+  accessToken: string;
+  user: AuthUser;
+};
 
 async function parseResponseBody<T>(res: Response): Promise<T | { message: string }> {
   const contentType = res.headers.get("content-type") ?? "";
@@ -15,7 +20,10 @@ async function parseResponseBody<T>(res: Response): Promise<T | { message: strin
   };
 }
 
-export async function registerApi(payload: { email: string; password: string }) {
+export async function registerApi(payload: {
+  email: string;
+  password: string;
+}): Promise<RegisterResponse> {
   const res = await fetch(`${API}/register`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
@@ -23,7 +31,7 @@ export async function registerApi(payload: { email: string; password: string }) 
     body: JSON.stringify(payload),
   });
 
-  const body = await parseResponseBody<Record<string, unknown>>(res);
+  const body = await parseResponseBody<RegisterResponse & { message?: string }>(res);
   if (!res.ok) throw body;
-  return body as Record<string, unknown>;
+  return body as RegisterResponse;
 }

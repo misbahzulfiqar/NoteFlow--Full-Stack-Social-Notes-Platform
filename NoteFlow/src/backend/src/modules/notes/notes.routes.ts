@@ -6,16 +6,11 @@ import {
   deleteNoteController,
   getOwnNoteByIdController,
   getOwnNotesController,
-  getPublicNoteBySlugController,
-  getPublicNotesController,
   patchNoteCoverController,
   updateNoteController,
 } from "./notes.controller";
 
 const router = Router();
-
-router.get("/public", getPublicNotesController);
-router.get("/public/:slug", getPublicNoteBySlugController);
 
 router.get("/", requireAuth, getOwnNotesController);
 router.post("/", requireAuth, createNoteController);

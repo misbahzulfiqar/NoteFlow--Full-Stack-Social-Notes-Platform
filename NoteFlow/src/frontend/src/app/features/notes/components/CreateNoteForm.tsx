@@ -116,8 +116,8 @@ export default function CreateNoteForm({ noteId }: Props) {
         }
       }
 
-      if (note.visibility === "public") router.push(`/n/${note.slug}`);
-      else router.push(`/notes/${note.id}`);
+      if (note.visibility === "public") router.push("/notes/public");
+      else router.push("/notes/private");
       router.refresh();
     } catch (error) {
       setFormError(getErrorMessage(error));
