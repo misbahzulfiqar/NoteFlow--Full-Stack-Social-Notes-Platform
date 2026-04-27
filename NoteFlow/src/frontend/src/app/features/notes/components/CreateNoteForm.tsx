@@ -7,6 +7,9 @@ import { useMyNotes } from "@/app/features/notes/hooks/useMyNotes";
 import { useUpdateNote } from "@/app/features/notes/hooks/useUpdateNote";
 import { uploadNoteCover } from "@/app/features/notes/services/notes.service";
 import { getErrorMessage } from "@/lib/getErrorMessage";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { z } from "zod";
 
 type Visibility = "public" | "private";
 
@@ -14,13 +17,26 @@ type Props = {
   noteId?: string;
 };
 
+const noteFormSchema = z.object({
+  title: z
+    .string()
+    .trim()
+    .min(1, "Title is required")
+    .max(200, "Title must be at most 200 characters"),
+  content: z
+    .string()
+    .trim()
+    .min(1, "Content is required")
+    .max(200000, "Content must be at most 200,000 characters"),
+  tags: z.string().max(1000),
+  visibility: z.enum(["public", "private"]),
+});
+
+type NoteFormValues = z.infer<typeof noteFormSchema>;
+
 export default function CreateNoteForm({ noteId }: Props) {
   const isEdit = Boolean(noteId);
 
-  const [title, setTitle] = useState("");
-  const [content, setContent] = useState("");
-  const [tags, setTags] = useState("");
-  const [visibility, setVisibility] = useState<Visibility>("public");
   const [formError, setFormError] = useState<string | null>(null);
   const [coverFile, setCoverFile] = useState<File | null>(null);
   const [isCoverUploading, setIsCoverUploading] = useState(false);
@@ -32,14 +48,36 @@ export default function CreateNoteForm({ noteId }: Props) {
   const { data: loaded, isLoading: loadingNote, isError: loadError } =
     useMyNotes(noteId);
 
+  const {
+    register,
+    handleSubmit,
+    watch,
+    setValue,
+    formState: { errors },
+  } = useForm<NoteFormValues>({
+    resolver: zodResolver(noteFormSchema),
+    defaultValues: {
+      title: "",
+      content: "",
+      tags: "",
+      visibility: "public",
+    },
+    mode: "onTouched",
+  });
+
+  const title = watch("title");
+  const content = watch("content");
+  const tags = watch("tags");
+  const visibility = watch("visibility") as Visibility;
+
   useEffect(() => {
     const n = loaded?.note;
     if (!n || !isEdit) return;
-    setTitle(n.title);
-    setContent(n.content);
-    setTags(n.tags.join(", "));
-    setVisibility(n.visibility);
-  }, [loaded?.note, isEdit]);
+    setValue("title", n.title);
+    setValue("content", n.content);
+    setValue("tags", n.tags.join(", "));
+    setValue("visibility", n.visibility);
+  }, [loaded?.note, isEdit, setValue]);
 
   const titleCount = useMemo(() => title.length, [title]);
   const contentCount = useMemo(() => content.length, [content]);
@@ -51,21 +89,15 @@ export default function CreateNoteForm({ noteId }: Props) {
     else router.push("/feed");
   };
 
-  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
-    e.preventDefault();
+  const onSubmit = async (values: NoteFormValues) => {
     setFormError(null);
 
-    const cleanTitle = title.trim();
-    const cleanContent = content.trim();
-
-    if (!cleanTitle || !cleanContent) {
-      setFormError("Title and content are required.");
-      return;
-    }
+    const cleanTitle = values.title.trim();
+    const cleanContent = values.content.trim();
 
     const cleanTags = Array.from(
       new Set(
-        tags
+        values.tags
           .split(",")
           .map((tag) => tag.trim())
           .filter(Boolean),
@@ -80,7 +112,7 @@ export default function CreateNoteForm({ noteId }: Props) {
             title: cleanTitle,
             content: cleanContent,
             tags: cleanTags,
-            visibility,
+            visibility: values.visibility,
           },
         });
 
@@ -103,7 +135,7 @@ export default function CreateNoteForm({ noteId }: Props) {
         title: cleanTitle,
         content: cleanContent,
         tags: cleanTags,
-        visibility,
+        visibility: values.visibility,
       });
       const { note } = response;
 
@@ -141,7 +173,7 @@ export default function CreateNoteForm({ noteId }: Props) {
   }
 
   return (
-    <form onSubmit={handleSubmit} className="px-6 py-8 lg:px-10">
+    <form onSubmit={handleSubmit(onSubmit)} className="px-6 py-8 lg:px-10">
       <div className="mx-auto max-w-4xl">
         <div className="mb-8 flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
           <div>
@@ -185,6 +217,11 @@ export default function CreateNoteForm({ noteId }: Props) {
             {formError}
           </p>
         ) : null}
+        {errors.title?.message || errors.content?.message ? (
+          <p className="mb-5 rounded-xl bg-red-50 px-4 py-3 text-sm text-red-600">
+            {errors.title?.message ?? errors.content?.message}
+          </p>
+        ) : null}
 
         <div className="space-y-5">
           <div className="grid grid-cols-1 gap-5 lg:grid-cols-2">
@@ -194,9 +231,9 @@ export default function CreateNoteForm({ noteId }: Props) {
               </label>
               <div className="relative">
                 <input
-                  value={title}
-                  onChange={(e) => setTitle(e.target.value.slice(0, 200))}
+                  {...register("title")}
                   placeholder="Enter note title..."
+                  maxLength={200}
                   className="h-12 w-full rounded-xl bg-white px-4 text-sm text-[#21264a] outline-none focus:outline-none"
                 />
                 <span className="pointer-events-none absolute bottom-2 right-3 text-xs text-[#9aa0c5]">
@@ -210,8 +247,7 @@ export default function CreateNoteForm({ noteId }: Props) {
                 Tags
               </label>
               <input
-                value={tags}
-                onChange={(e) => setTags(e.target.value)}
+                {...register("tags")}
                 placeholder="Add tags (comma separated)"
                 className="h-12 w-full rounded-xl border border-transparent bg-white px-4 text-sm text-[#21264a] outline-none placeholder:text-[#9aa0c6] focus:border-transparent focus:outline-none focus:ring-0 focus:ring-offset-0"
               />
@@ -274,14 +310,14 @@ export default function CreateNoteForm({ noteId }: Props) {
                   title="Public"
                   subtitle="Anyone can discover and read this note"
                   icon={<GlobeIcon />}
-                  onClick={() => setVisibility("public")}
+                  onClick={() => setValue("visibility", "public")}
                 />
                 <VisibilityCard
                   selected={visibility === "private"}
                   title="Private"
                   subtitle="Only you can view this note"
                   icon={<LockIcon />}
-                  onClick={() => setVisibility("private")}
+                  onClick={() => setValue("visibility", "private")}
                 />
               </div>
             </div>
@@ -307,9 +343,9 @@ export default function CreateNoteForm({ noteId }: Props) {
 
           <div className="relative">
             <textarea
-              value={content}
-              onChange={(e) => setContent(e.target.value.slice(0, 200000))}
+              {...register("content")}
               placeholder="Write your note content here..."
+              maxLength={200000}
               className="h-80 w-full resize-none rounded-xl border border-transparent bg-white px-4 py-3 text-sm text-[#21264a] outline-none placeholder:text-[#9aa0c6] focus:border-transparent focus:outline-none focus:ring-0 focus:ring-offset-0 lg:h-96"
             />
             <span className="pointer-events-none absolute bottom-3 right-3 text-xs text-[#9aa0c5]">
