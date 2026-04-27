@@ -17,15 +17,17 @@ npm install
 npm run dev
 ```
 
-## Required environment variable
+## API base URL behavior
 
-- `NEXT_PUBLIC_API_URL`
-  - local: `http://localhost:5000/api`
-  - deployed: `https://your-backend-project.vercel.app/api`
+- If `NEXT_PUBLIC_API_URL` is set, frontend uses that value.
+- If it is not set in browser, frontend uses same-origin `/api`.
+  - Example on Vercel: `https://your-frontend.vercel.app/api`
+  - This is the correct option for single-project deployment.
 
-## Deploy frontend on Vercel (separate project)
+## Deploy frontend on Vercel
 
 Set Vercel project root directory to `src/frontend`.
 
-In Vercel Project Settings -> Environment Variables, set:
+For single-project deployment, do not set `NEXT_PUBLIC_API_URL`.
+For separate backend deployment, set:
 - `NEXT_PUBLIC_API_URL=https://your-backend-project.vercel.app/api`
