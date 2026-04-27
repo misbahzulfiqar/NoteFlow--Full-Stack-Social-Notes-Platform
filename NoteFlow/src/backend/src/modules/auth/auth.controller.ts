@@ -8,7 +8,7 @@ import {
 } from "./auth.service";
 
 function refreshCookieBase() {
-  const defaultSameSite = process.env.NODE_ENV === "production" ? "none" : "strict";
+  const defaultSameSite = "strict";
   const raw = (process.env.REFRESH_COOKIE_SAMESITE ?? defaultSameSite).toLowerCase();
   const sameSite: "strict" | "lax" | "none" =
     raw === "none" || raw === "lax" || raw === "strict" ? raw : "strict";

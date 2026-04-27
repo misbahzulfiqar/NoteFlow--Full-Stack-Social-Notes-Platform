@@ -5,11 +5,15 @@ import Image from "next/image";
 import { useForm } from "react-hook-form";
 import { useLoginStore } from "@/features/auth/stores/login.store";
 import { useRouter } from "next/navigation";
+import { z } from "zod";
+import { zodResolver } from "@hookform/resolvers/zod";
 
-type LoginFormValues = {
-  email: string;
-  password: string;
-};
+const loginSchema = z.object({
+  email: z.email("Please enter a valid email"),
+  password: z.string().min(6, "Password must be at least 6 characters"),
+});
+
+type LoginFormValues = z.infer<typeof loginSchema>;
 
 export default function LoginPage() {
   const {
@@ -17,6 +21,7 @@ export default function LoginPage() {
     handleSubmit,
     formState: { errors, isSubmitting },
   } = useForm<LoginFormValues>({
+    resolver: zodResolver(loginSchema),
     defaultValues: {
       email: "",
       password: "",
@@ -90,13 +95,7 @@ export default function LoginPage() {
               autoComplete="email"
               placeholder="you@example.com"
               className="w-full rounded-xl border border-white/60 bg-white px-3.5 py-2.5 text-sm text-indigo-950 shadow-md outline-none ring-indigo-300/40 placeholder:text-gray-400 focus:border-indigo-300 focus:ring-2"
-              {...register("email", {
-                required: "Email is required",
-                pattern: {
-                  value: /^[^\s@]+@[^\s@]+\.[^\s@]+$/,
-                  message: "Please enter a valid email",
-                },
-              })}
+              {...register("email")}
             />
             {emailError ? (
               <p className="text-xs text-red-500">{emailError}</p>
@@ -116,13 +115,7 @@ export default function LoginPage() {
               autoComplete="current-password"
               placeholder="••••••••"
               className="w-full rounded-xl border border-white/60 bg-white px-3.5 py-2.5 text-sm text-indigo-950 shadow-md outline-none ring-indigo-300/40 placeholder:text-gray-400 focus:border-indigo-300 focus:ring-2"
-              {...register("password", {
-                required: "Password is required",
-                minLength: {
-                  value: 6,
-                  message: "Password must be at least 6 characters",
-                },
-              })}
+              {...register("password")}
             />
             {passwordError ? (
               <p className="text-xs text-red-500">{passwordError}</p>

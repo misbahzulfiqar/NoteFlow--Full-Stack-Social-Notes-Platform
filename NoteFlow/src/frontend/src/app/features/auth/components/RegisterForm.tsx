@@ -5,13 +5,20 @@ import Image from "next/image";
 import { useForm } from "react-hook-form";
 import { useRouter } from "next/navigation";
 import { useRegisterStore } from "@/features/auth/stores/register.store";
+import { z } from "zod";
+import { zodResolver } from "@hookform/resolvers/zod";
 
+const registerSchema = z.object({
+  username: z
+    .string()
+    .trim()
+    .min(3, "Username must be at least 3 characters")
+    .max(30, "Username must be at most 30 characters"),
+  email: z.email("Please enter a valid email"),
+  password: z.string().min(8, "Password must be at least 8 characters"),
+});
 
-type RegisterFormValues = {
-  username: string;
-  email: string;
-  password: string;
-};
+type RegisterFormValues = z.infer<typeof registerSchema>;
 
 export default function RegisterPage() {
   const {
@@ -19,6 +26,7 @@ export default function RegisterPage() {
     handleSubmit,
     formState: { errors, isSubmitting },
   } = useForm<RegisterFormValues>({
+    resolver: zodResolver(registerSchema),
     defaultValues: {
       username: "",
       email: "",
@@ -95,13 +103,7 @@ export default function RegisterPage() {
               autoComplete="username"
               placeholder="yourname"
               className="w-full rounded-xl border border-white/60 bg-white px-3.5 py-2.5 text-sm text-indigo-950 shadow-md outline-none ring-indigo-300/40 placeholder:text-gray-400 focus:border-indigo-300 focus:ring-2"
-              {...register("username", {
-                required: "Username is required",
-                minLength: {
-                  value: 8,
-                  message: "Password must be at least 8 characters",
-                },
-              })}
+              {...register("username")}
             />
             {usernameError ? (
               <p className="text-xs text-red-500">{usernameError}</p>
@@ -121,13 +123,7 @@ export default function RegisterPage() {
               autoComplete="email"
               placeholder="you@example.com"
               className="w-full rounded-xl border border-white/60 bg-white px-3.5 py-2.5 text-sm text-indigo-950 shadow-md outline-none ring-indigo-300/40 placeholder:text-gray-400 focus:border-indigo-300 focus:ring-2"
-              {...register("email", {
-                required: "Email is required",
-                pattern: {
-                  value: /^[^\s@]+@[^\s@]+\.[^\s@]+$/,
-                  message: "Please enter a valid email",
-                },
-              })}
+              {...register("email")}
             />
             {emailError ? (
               <p className="text-xs text-red-500">{emailError}</p>
@@ -147,13 +143,7 @@ export default function RegisterPage() {
               autoComplete="new-password"
               placeholder="••••••••"
               className="w-full rounded-xl border border-white/60 bg-white px-3.5 py-2.5 text-sm text-indigo-950 shadow-md outline-none ring-indigo-300/40 placeholder:text-gray-400 focus:border-indigo-300 focus:ring-2"
-              {...register("password", {
-                required: "Password is required",
-                minLength: {
-                  value: 6,
-                  message: "Password must be at least 6 characters",
-                },
-              })}
+              {...register("password")}
             />
             {passwordError ? (
               <p className="text-xs text-red-500">{passwordError}</p>
