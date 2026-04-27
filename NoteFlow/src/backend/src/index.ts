@@ -7,18 +7,23 @@ import { connectMongo } from "./config/db";
 import notesRoutes from "./modules/notes/notes.routes";
 import usersRoutes from "./modules/users/users.routes";
 import favoritesRoutes from "./modules/favorites/favorites.routes";
-
+import feedRoutes from "./modules/feed/feed.routes";
+import { errorMiddleware } from "./middleware/error.middleware";
 
 const app = express();
 
-const corsOrigins = (process.env.CLIENT_ORIGINS ?? "http://localhost:3000")
+const fromEnv =
+  process.env.CLIENT_URL ??
+  process.env.CLIENT_ORIGINS ??
+  "http://localhost:3000";
+const corsOrigins = fromEnv
   .split(",")
   .map((s) => s.trim())
   .filter(Boolean);
 
 app.use(
   cors({
-    origin: corsOrigins,
+    origin: corsOrigins.length <= 1 ? corsOrigins[0] ?? true : corsOrigins,
     credentials: true,
   })
 );
@@ -27,11 +32,12 @@ app.use(express.json());
 app.use(cookieParser());
 
 app.use("/api/auth", authRoutes);
+app.use("/api/feed", feedRoutes);
 app.use("/api/notes", notesRoutes);
 app.use("/api/users", usersRoutes);
 app.use("/api/favorites", favoritesRoutes);
 
-
+app.use(errorMiddleware);
 
 async function bootstrap() {
   await connectMongo();

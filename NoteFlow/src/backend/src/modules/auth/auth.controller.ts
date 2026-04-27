@@ -1,13 +1,33 @@
 import type { Request, Response } from "express";
 import { loginSchema, registerSchema } from "./auth.validation";
-import { loginUser, refreshSession, registerUser } from "./auth.service";
+import {
+  loginUser,
+  refreshSession,
+  registerUser,
+  revokeRefreshToken,
+} from "./auth.service";
+
+function refreshCookieBase() {
+  const defaultSameSite = process.env.NODE_ENV === "production" ? "none" : "strict";
+  const raw = (process.env.REFRESH_COOKIE_SAMESITE ?? defaultSameSite).toLowerCase();
+  const sameSite: "strict" | "lax" | "none" =
+    raw === "none" || raw === "lax" || raw === "strict" ? raw : "strict";
+  const secure =
+    sameSite === "none" ? true : process.env.NODE_ENV === "production";
+  return { sameSite, secure };
+}
 
 const refreshCookieOptions = {
   httpOnly: true,
-  secure: process.env.NODE_ENV === "production",
-  sameSite: "lax" as const,
+  ...refreshCookieBase(),
   path: "/",
   maxAge: 7 * 24 * 60 * 60 * 1000,
+};
+
+const clearRefreshCookieOptions = {
+  httpOnly: true,
+  ...refreshCookieBase(),
+  path: "/",
 };
 
 export async function registerController(req: Request, res: Response) {
@@ -69,4 +89,15 @@ export async function refreshController(req: Request, res: Response) {
   } catch {
     return res.status(401).json({ message: "Unauthorized" });
   }
+}
+
+export async function logoutController(req: Request, res: Response) {
+  const token = req.cookies?.refreshToken;
+  try {
+    await revokeRefreshToken(token);
+  } catch {
+    /* ignore */
+  }
+  res.clearCookie("refreshToken", clearRefreshCookieOptions);
+  return res.json({ message: "Logged out" });
 }

@@ -1,5 +1,18 @@
 import { apiClient } from "@/lib/apiClient";
+import type { Note } from "@/app/features/notes/types";
 import type { AuthUser } from "@/store/authStore";
+
+export type UserPublicProfileResponse = {
+  user: AuthUser;
+  notes: Note[];
+};
+
+export async function getUserPublicProfile(
+  userId: string
+): Promise<UserPublicProfileResponse> {
+  const res = await apiClient.get<UserPublicProfileResponse>(`/users/${userId}`);
+  return res.data;
+}
 
 export type UpdateProfileResponse = {
   message?: string;

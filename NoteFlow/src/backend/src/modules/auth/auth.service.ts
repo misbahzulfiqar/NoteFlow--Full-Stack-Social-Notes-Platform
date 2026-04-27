@@ -164,3 +164,8 @@ export async function refreshSession(oldRefreshToken: string): Promise<{
     user: toAuthUser(userDoc),
   };
 }
+
+export async function revokeRefreshToken(refreshToken: string | undefined): Promise<void> {
+  if (!refreshToken) return;
+  await RefreshTokenModel.deleteOne({ token: refreshToken });
+}

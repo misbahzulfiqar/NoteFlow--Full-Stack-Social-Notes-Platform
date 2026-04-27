@@ -139,13 +139,6 @@ export default function LoginPage() {
         </form>
 
         <div className="mt-4 flex flex-col items-center gap-3 text-center">
-          <Link
-            href="/forgot-password"
-            className="text-sm font-medium text-violet-500 hover:text-violet-600"
-          >
-            Forgot password?
-          </Link>
-
           <p className="text-sm text-indigo-900/80">
             Don&apos;t have an account?{" "}
             <Link

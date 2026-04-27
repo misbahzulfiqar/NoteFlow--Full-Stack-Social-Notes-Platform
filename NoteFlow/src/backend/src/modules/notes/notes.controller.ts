@@ -6,8 +6,6 @@ import {
   deleteNote,
   getOwnNoteById,
   getOwnNotes,
-  getPublicNoteBySlug,
-  getPublicNotes,
   updateNote,
   updateNoteCover,
 } from "./notes.service";
@@ -64,8 +62,12 @@ function parseListQuery(req: Request) {
   const limit = Number(req.query.limit ?? 12);
   const search = typeof req.query.search === "string" ? req.query.search : undefined;
   const tag = typeof req.query.tag === "string" ? req.query.tag : undefined;
-  const sort: "recent" | "oldest" =
-  req.query.sort === "oldest" ? "oldest" : "recent";
+  const sort: "recent" | "oldest" | "popular" =
+    req.query.sort === "oldest"
+      ? "oldest"
+      : req.query.sort === "popular"
+        ? "popular"
+        : "recent";
 const visibility: "public" | "private" | undefined =
   req.query.visibility === "public" || req.query.visibility === "private"
     ? req.query.visibility
@@ -78,28 +80,6 @@ const visibility: "public" | "private" | undefined =
     sort,
     visibility,
   };
-}
-export async function getPublicNotesController(req: Request, res: Response) {
-  try {
-    const data = await getPublicNotes(parseListQuery(req));
-    return res.json(data);
-  } catch (e) {
-    return res
-      .status(400)
-      .json({ message: e instanceof Error ? e.message : "Failed to fetch public notes" });
-  }
-}
-export async function getPublicNoteBySlugController(req: Request, res: Response) {
-  try {
-    const slug = getSingleParam(req.params.slug);
-    if (!slug) return res.status(400).json({ message: "Invalid slug param" });
-    const note = await getPublicNoteBySlug(slug);    if (!note) return res.status(404).json({ message: "Note not found" });
-    return res.json({ note });
-  } catch (e) {
-    return res
-      .status(400)
-      .json({ message: e instanceof Error ? e.message : "Failed to fetch note" });
-  }
 }
 export async function getOwnNotesController(req: Request, res: Response) {
   if (!req.user) return res.status(401).json({ message: "Unauthorized" });

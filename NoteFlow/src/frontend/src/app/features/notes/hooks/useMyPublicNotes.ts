@@ -6,7 +6,7 @@ import { getMyNotes } from "../services/notes.service";
 type Params = {
   search?: string;
   tag?: string;
-  sort?: "recent" | "oldest";
+  sort?: "recent" | "oldest" | "popular";
   page?: number;
   limit?: number;
   visibility?: "public" | "private";

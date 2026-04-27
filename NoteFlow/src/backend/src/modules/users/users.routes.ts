@@ -1,7 +1,10 @@
 import { Router } from "express";
 import { requireAuth } from "../../middleware/auth.middleware";
 import { upload } from "../../middleware/upload.middleware";
-import { patchProfileController } from "./users.controller";
+import {
+  getUserPublicProfileController,
+  patchProfileController,
+} from "./users.controller";
 
 const router = Router();
 
@@ -11,5 +14,6 @@ router.patch(
   upload.single("avatar"),
   patchProfileController
 );
+router.get("/:id", getUserPublicProfileController);
 
 export default router;

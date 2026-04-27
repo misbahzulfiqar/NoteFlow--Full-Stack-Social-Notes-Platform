@@ -38,7 +38,7 @@ export default function RegisterPage() {
       email: data.email,
       password: data.password,
     });
-    if (ok) router.push("/login");
+    if (ok) router.push("/feed");
   };
   const usernameError = errors.username?.message ?? backendFieldErrors?.username?.[0];
   const emailError = errors.email?.message ?? backendFieldErrors?.email?.[0];
