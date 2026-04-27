@@ -10,10 +10,8 @@ export function getApiBaseUrl(): string {
     return explicit;
   }
 
-  if (process.env.VERCEL === "1") {
-    console.warn(
-      "[NoteFlow] Set NEXT_PUBLIC_API_URL to your Express API (e.g. https://api.example.com/api) so the deployed app can reach the backend."
-    );
+  if (typeof window !== "undefined") {
+    return `${window.location.origin}/api`;
   }
 
   return "http://localhost:5000/api";
