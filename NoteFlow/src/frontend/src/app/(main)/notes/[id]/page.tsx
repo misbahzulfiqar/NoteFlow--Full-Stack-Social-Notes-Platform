@@ -6,7 +6,7 @@ import { useMyNotes } from "@/app/features/notes/hooks/useMyNotes";
 
 export default function PrivateNoteDetailPage() {
   const params = useParams();
-  const id = typeof params.id === "string" ? params.id : "";
+  const id = typeof params?.id === "string" ? params.id : "";
   const { data, isLoading, isError } = useMyNotes(id || undefined);
 
   const note = data?.note;

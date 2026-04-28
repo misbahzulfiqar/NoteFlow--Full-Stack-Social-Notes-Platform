@@ -7,7 +7,7 @@ import { getUserPublicProfile } from "@/app/features/users/services/users.servic
 
 export default function UserPublicProfilePage() {
   const params = useParams();
-  const id = typeof params.id === "string" ? params.id : "";
+  const id = typeof params?.id === "string" ? params.id : "";
 
   const { data, isLoading, isError } = useQuery({
     queryKey: ["users", "public", id],

@@ -47,7 +47,6 @@ const NoteSchema = new Schema(
   { timestamps: true }
 );
 
-NoteSchema.index({ slug: 1 }, { unique: true });
 NoteSchema.index({ owner: 1, createdAt: -1 });
 
 export type NoteDocument = InferSchemaType<typeof NoteSchema>;

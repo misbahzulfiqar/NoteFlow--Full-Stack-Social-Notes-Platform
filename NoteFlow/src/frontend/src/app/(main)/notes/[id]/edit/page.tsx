@@ -5,7 +5,7 @@ import CreateNoteForm from "@/app/features/notes/components/CreateNoteForm";
 
 export default function EditNotePage() {
   const params = useParams();
-  const id = typeof params.id === "string" ? params.id : "";
+  const id = typeof params?.id === "string" ? params.id : "";
 
   if (!id) {
     return (

@@ -29,7 +29,7 @@ npm run dev
 Set Vercel project root directory to `src/frontend`.
 
 - Keep `NEXT_PUBLIC_API_URL` empty for same-origin `/api`.
-- This project includes a Vercel function at `api/[...all].ts` that serves backend routes.
+- This project includes a Vercel function at `src/pages/api/[...all].ts` that serves backend routes.
 - Add backend env vars in this same Vercel project:
   - `MONGODB_URI`
   - `MONGODB_DB_NAME`
