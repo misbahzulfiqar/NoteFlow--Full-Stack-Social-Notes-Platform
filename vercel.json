@@ -1,0 +1,6 @@
+{
+  "$schema": "https://openapi.vercel.sh/vercel.json",
+  "installCommand": "cd NoteFlow && npm install",
+  "buildCommand": "cd NoteFlow && npm run build",
+  "outputDirectory": "NoteFlow/src/frontend/.next"
+}
