@@ -6,6 +6,7 @@
     "dev": "next dev --webpack",
     "dev:turbo": "next dev --turbopack",
     "build": "next build",
+    "build": "npm --prefix ../backend install --no-audit --no-fund && next build",
     "start": "next start",
     "lint": "eslint"
   },
