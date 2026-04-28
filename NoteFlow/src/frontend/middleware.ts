@@ -42,6 +42,8 @@
 //   matcher: ["/((?!api|_next/static|_next/image|.*\\..*).*)"],
 // };
 
+import { NextResponse } from "next/server";
+
 export function middleware() {
   return NextResponse.next();
 }
