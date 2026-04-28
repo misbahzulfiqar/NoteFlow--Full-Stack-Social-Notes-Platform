@@ -9,24 +9,35 @@ const isProtected = (p: string) =>
   p.startsWith("/profile");
 
 export function middleware(req: NextRequest) {
-  const p = req.nextUrl.pathname;
-  const loggedIn = !!req.cookies.get("refreshToken")?.value;
+  try {
+    const p = req.nextUrl.pathname;
+    const loggedIn = !!req.cookies.get("refreshToken")?.value;
 
-  if (p === "/") {
-    return NextResponse.redirect(new URL(loggedIn ? "/feed" : "/login", req.url));
-  }
+    if (p === "/") {
+      const nextUrl = req.nextUrl.clone();
+      nextUrl.pathname = loggedIn ? "/feed" : "/login";
+      return NextResponse.redirect(nextUrl);
+    }
 
-  if (isAuthPage(p) && loggedIn) {
-    return NextResponse.redirect(new URL("/feed", req.url));
-  }
+    if (isAuthPage(p) && loggedIn) {
+      const nextUrl = req.nextUrl.clone();
+      nextUrl.pathname = "/feed";
+      return NextResponse.redirect(nextUrl);
+    }
 
-  if (isProtected(p) && !loggedIn) {
-    return NextResponse.redirect(new URL("/login", req.url));
+    if (isProtected(p) && !loggedIn) {
+      const nextUrl = req.nextUrl.clone();
+      nextUrl.pathname = "/login";
+      return NextResponse.redirect(nextUrl);
+    }
+  } catch {
+    // Never crash middleware in production; allow request through.
+    return NextResponse.next();
   }
 
   return NextResponse.next();
 }
 
 export const config = {
-  matcher: ["/((?!api|_next/static|_next/image|favicon.ico).*)"],
+  matcher: ["/((?!api|_next/static|_next/image|.*\\..*).*)"],
 };
