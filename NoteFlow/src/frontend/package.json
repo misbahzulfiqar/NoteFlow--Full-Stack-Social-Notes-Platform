@@ -5,7 +5,7 @@
   "scripts": {
     "dev": "next dev --webpack",
     "dev:turbo": "next dev --turbopack",
-    "build": "npm --prefix ../backend install && next build",
+    "build": "npm --prefix ../backend install --include=dev && next build",
     "start": "next start",
     "lint": "eslint"
   },
