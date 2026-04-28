@@ -113,7 +113,7 @@ const initial = initialSource ? initialSource.toUpperCase() : "";
 }
 
 export default function MainLayout({ children }: { children: ReactNode }) {
-  const pathname = usePathname();
+  const pathname = usePathname() ?? "";
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-sky-100 via-indigo-50 to-violet-100 text-slate-800 lg:h-screen lg:overflow-hidden">

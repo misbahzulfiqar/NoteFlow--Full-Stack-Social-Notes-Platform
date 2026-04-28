@@ -24,10 +24,20 @@ npm run dev
   - Example on Vercel: `https://your-frontend.vercel.app/api`
   - This is the correct option for single-project deployment.
 
-## Deploy frontend on Vercel
+## Deploy on Vercel (single project)
 
 Set Vercel project root directory to `src/frontend`.
 
-For single-project deployment, do not set `NEXT_PUBLIC_API_URL`.
-For separate backend deployment, set:
-- `NEXT_PUBLIC_API_URL=https://your-backend-project.vercel.app/api`
+- Keep `NEXT_PUBLIC_API_URL` empty for same-origin `/api`.
+- This project includes a Vercel function at `src/pages/api/[...all].ts` that serves backend routes.
+- Add backend env vars in this same Vercel project:
+  - `MONGODB_URI`
+  - `MONGODB_DB_NAME`
+  - `JWT_ACCESS_SECRET`
+  - `JWT_REFRESH_SECRET`
+  - `ACCESS_TOKEN_EXPIRES`
+  - `REFRESH_TOKEN_EXPIRES`
+  - `CLIENT_ORIGINS` (include your frontend domain)
+  - `CLOUDINARY_CLOUD_NAME`
+  - `CLOUDINARY_API_KEY`
+  - `CLOUDINARY_API_SECRET`

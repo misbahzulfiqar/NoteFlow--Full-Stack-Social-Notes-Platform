@@ -9,7 +9,7 @@ import { useToggleFeedLike } from "@/app/features/notes/hooks/useToggleFeedLike"
 
 export default function PublicNoteDetailPage() {
   const params = useParams();
-  const slug = typeof params.slug === "string" ? params.slug : "";
+  const slug = typeof params?.slug === "string" ? params.slug : "";
   const user = useAuthStore((s) => s.user);
   const { data, isLoading, isError } = usePublicNoteBySlug(slug || undefined);
   const { mutate: toggleLike, isPending: likePending } = useToggleFeedLike();
