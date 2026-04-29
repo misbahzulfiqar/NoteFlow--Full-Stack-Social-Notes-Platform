@@ -1,0 +1,14 @@
+{
+  "name": "noteflow-monorepo-root",
+  "private": true,
+  "description": "Repo root: satisfies Next.js detection; build delegates to NoteFlow/src/frontend. In Vercel, Root Directory can be repo root (empty) or NoteFlow/src/frontend — if frontend-only, clear custom install/build so defaults use that folder.",
+  "scripts": {
+    "build": "npm --prefix NoteFlow/src/backend install --include=dev --no-audit --no-fund && npm --prefix NoteFlow/src/frontend install --include=dev --no-audit --no-fund && npm --prefix NoteFlow/src/frontend run build",
+    "dev": "npm --prefix NoteFlow/src/frontend run dev"
+  },
+  "dependencies": {
+    "next": "16.2.4",
+    "react": "19.2.4",
+    "react-dom": "19.2.4"
+  }
+}
