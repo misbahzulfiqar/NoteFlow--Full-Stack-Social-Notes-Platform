@@ -1,5 +1,6 @@
 {
   "$schema": "https://openapi.vercel.sh/vercel.json",
-  "installCommand": "npm --prefix NoteFlow/src/backend install --include=dev --no-audit --no-fund && npm --prefix NoteFlow/src/frontend install --include=dev --no-audit --no-fund",
+  "framework": "nextjs",
+  "installCommand": "npm install --no-audit --no-fund && npm --prefix NoteFlow/src/backend install --include=dev --no-audit --no-fund && npm --prefix NoteFlow/src/frontend install --include=dev --no-audit --no-fund",
   "buildCommand": "npm run build"
 }
